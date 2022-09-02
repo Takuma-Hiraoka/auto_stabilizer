@@ -45,7 +45,7 @@ AutoStabilizer::Ports::Ports() :
   m_actCogOut_("actCogOut", m_actCog_),
   m_actDcmOut_("actDcmOut", m_actDcm_),
 
-  m_rslandingTargetOut_("landingTarget", m_rslandingTarget_),
+  m_landingTargetOut_("landingTarget", m_landingTarget_),
 
   m_AutoStabilizerServicePort_("AutoStabilizerService"),
 
@@ -81,7 +81,7 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
   this->addOutPort("tgtZmpOut", this->ports_.m_tgtZmpOut_);
   this->addOutPort("actCogOut", this->ports_.m_actCogOut_);
   this->addOutPort("actDcmOut", this->ports_.m_actDcmOut_);
-  this->addOutPort("landingTarget", this->ports_.m_rslandingTargetOut_);
+  this->addOutPort("landingTarget", this->ports_.m_landingTargetOut_);
   this->ports_.m_AutoStabilizerServicePort_.registerProvider("service0", "AutoStabilizerService", this->ports_.m_service0_);
   this->addPort(this->ports_.m_AutoStabilizerServicePort_);
   this->ports_.m_RobotHardwareServicePort_.registerConsumer("service0", "RobotHardwareService", this->ports_.m_robotHardwareService0_);
@@ -674,6 +674,15 @@ bool AutoStabilizer::writeOutPortData(AutoStabilizer::Ports& ports, const AutoSt
     }
   }
 
+  //steppable region
+  if(!gaitParam.isStatic()) {
+    ports.m_landingTarget_.tm = ports.m_qRef_.tm;
+    ports.m_landingTarget_.data.x = 0;
+    ports.m_landingTarget_.data.y = 0;
+    ports.m_landingTarget_.data.z = 0;
+    ports.m_landingTarget_.data.l_r = gaitParam.footstepNodesList[0].isSupportPhase[RLEG] ? 0 : 1; // 歩き始めて片足支持期になってから着地位置修正を行うので、両足支持期を考慮する必要がないとしている。
+    ports.m_landingTargetOut_.write(); 
+  }
   return true;
 }
 
