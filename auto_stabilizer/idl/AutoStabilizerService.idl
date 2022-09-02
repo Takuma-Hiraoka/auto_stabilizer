@@ -1,6 +1,8 @@
 #ifndef AutoStabilizerService_idl
 #define AutoStabilizerService_idl
 
+#include "ExtendedDataTypes.idl"
+
 module OpenHRP
 {
 
@@ -406,6 +408,35 @@ module OpenHRP
     boolean getFootStepState(out FootStepState i_param);
 
   };
+
+  struct LandingPosition
+  {
+    double x;
+    double y;
+    double z;
+    double nx;
+    double ny;
+    double nz;
+    long l_r; // 0: right. 1: left.
+  };
+
+  struct SteppableRegion
+  {
+    sequence<sequence<double> > region;
+    long l_r; // 0: right. 1: left.
+  };
+
+  struct TimedLandingPosition
+  {
+    RTC::Time tm;
+    LandingPosition data;
+  };
+  struct TimedSteppableRegion
+  {
+    RTC::Time tm;
+    SteppableRegion data;
+  };
+
 };
 
 #endif

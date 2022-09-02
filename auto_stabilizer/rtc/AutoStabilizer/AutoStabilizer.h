@@ -138,6 +138,8 @@ protected:
     std::vector<std::unique_ptr<RTC::OutPort<RTC::TimedDoubleSeq> > > m_tgtEEWrenchOut_;
     std::vector<RTC::TimedDoubleSeq> m_actEEWrench_; // Generate World frame. EndEffector origin. 要素数及び順番はgaitParam_.eeNameと同じ
     std::vector<std::unique_ptr<RTC::OutPort<RTC::TimedDoubleSeq> > > m_actEEWrenchOut_;
+    OpenHRP::TimedLandingPosition m_rslandingTarget_; // steppable_region合図
+    RTC::OutPort<OpenHRP::TimedLandingPosition> m_rslandingTargetOut_;
   };
   Ports ports_;
 
