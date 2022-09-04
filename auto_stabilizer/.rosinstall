@@ -30,3 +30,17 @@
 - git:
     uri: https://github.com/Naoki-Hiraoka/joint_limit_table
     local-name: joint_limit_table
+- git:
+    local-name: rtm-ros-robotics/rtmros_choreonoid
+    uri: git@github.com:Naoki-Hiraoka/rtmros_choreonoid.git
+    version: auto-stabilizer-vision
+- git:
+    local-name: rtm-ros-robotics/rtmros_common
+    uri: https://github.com/start-jsk/rtmros_common.git
+    version: auto-stabilizer
+- git:
+    local-name: rtm-ros-robotics/rtmros_tutorials
+    uri: git@github.com:start-jsk/rtmros_tutorials.git
+- git:
+    local-name: choreonoid_ros_ext_plugin
+    uri: git@github.com:Naoki-Hiraoka/choreonoid_ros_ext_plugin.git
