@@ -30,12 +30,14 @@ AutoStabilizer::Ports::Ports() :
   m_qActIn_("qAct", m_qAct_),
   m_dqActIn_("dqAct", m_dqAct_),
   m_actImuIn_("actImuIn", m_actImu_),
-
+  m_steppableRegionIn_("steppableRegionIn", m_steppableRegion_),
+  
   m_qOut_("q", m_q_),
   m_genTauOut_("genTauOut", m_genTau_),
   m_genBasePoseOut_("genBasePoseOut", m_genBasePose_),
   m_genBaseTformOut_("genBaseTformOut", m_genBaseTform_),
-
+  m_landingTargetOut_("landingTargetOut", m_landingTarget_),
+  
   m_genBasePosOut_("genBasePosOut", m_genBasePos_),
   m_genBaseRpyOut_("genBaseRpyOut", m_genBaseRpy_),
   m_genCogOut_("genCogOut", m_genCog_),
@@ -44,9 +46,6 @@ AutoStabilizer::Ports::Ports() :
   m_tgtZmpOut_("tgtZmpOut", m_tgtZmp_),
   m_actCogOut_("actCogOut", m_actCog_),
   m_actDcmOut_("actDcmOut", m_actDcm_),
-
-  m_landingTargetOut_("landingTargetOut", m_landingTarget_),
-  m_steppableRegionIn_("steppableRegionIn", m_steppableRegion_),
 
   m_AutoStabilizerServicePort_("AutoStabilizerService"),
 
@@ -70,10 +69,12 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
   this->addInPort("qAct", this->ports_.m_qActIn_);
   this->addInPort("dqAct", this->ports_.m_dqActIn_);
   this->addInPort("actImuIn", this->ports_.m_actImuIn_);
+  this->addInPort("steppableRegionIn", this->ports_.m_steppableRegionIn_);
   this->addOutPort("q", this->ports_.m_qOut_);
   this->addOutPort("genTauOut", this->ports_.m_genTauOut_);
   this->addOutPort("genBasePoseOut", this->ports_.m_genBasePoseOut_);
   this->addOutPort("genBaseTformOut", this->ports_.m_genBaseTformOut_);
+  this->addOutPort("landingTargetOut", this->ports_.m_landingTargetOut_);
   this->addOutPort("genBasePosOut", this->ports_.m_genBasePosOut_);
   this->addOutPort("genBaseRpyOut", this->ports_.m_genBaseRpyOut_);
   this->addOutPort("genCogOut", this->ports_.m_genCogOut_);
@@ -82,8 +83,6 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
   this->addOutPort("tgtZmpOut", this->ports_.m_tgtZmpOut_);
   this->addOutPort("actCogOut", this->ports_.m_actCogOut_);
   this->addOutPort("actDcmOut", this->ports_.m_actDcmOut_);
-  this->addOutPort("landingTargetOut", this->ports_.m_landingTargetOut_);
-  this->addInPort("steppableRegionIn", this->ports_.m_steppableRegionIn_);
   this->ports_.m_AutoStabilizerServicePort_.registerProvider("service0", "AutoStabilizerService", this->ports_.m_service0_);
   this->addPort(this->ports_.m_AutoStabilizerServicePort_);
   this->ports_.m_RobotHardwareServicePort_.registerConsumer("service0", "RobotHardwareService", this->ports_.m_robotHardwareService0_);

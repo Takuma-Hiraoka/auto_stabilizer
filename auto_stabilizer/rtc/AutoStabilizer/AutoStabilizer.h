@@ -99,7 +99,9 @@ protected:
     std::vector<RTC::TimedPose3D> m_refEEPose_; // Reference World frame. 要素数及び順番はgaitParam_.eeNameと同じ
     std::vector<std::unique_ptr<RTC::InPort<RTC::TimedPose3D> > > m_refEEPoseIn_;
     RTC::Time refEEPoseLastUpdateTime_; // m_refEEPoseIn_のどれかに最後にdataが届いたときの、m_qRef_.tmの時刻
-
+    OpenHRP::TimedSteppableRegion m_steppableRegion_;
+    RTC::InPort<OpenHRP::TimedSteppableRegion> m_steppableRegionIn_;
+    
     RTC::TimedDoubleSeq m_q_;
     RTC::OutPort<RTC::TimedDoubleSeq> m_qOut_;
     RTC::TimedDoubleSeq m_genTau_;
@@ -108,6 +110,8 @@ protected:
     RTC::OutPort<RTC::TimedPose3D> m_genBasePoseOut_;
     RTC::TimedDoubleSeq m_genBaseTform_;  // Generate World frame
     RTC::OutPort<RTC::TimedDoubleSeq> m_genBaseTformOut_; // for HrpsysSeqStateROSBridge
+    OpenHRP::TimedLandingPosition m_landingTarget_;
+    RTC::OutPort<OpenHRP::TimedLandingPosition> m_landingTargetOut_; // steppable_region合図
 
     AutoStabilizerService_impl m_service0_;
     RTC::CorbaPort m_AutoStabilizerServicePort_;
@@ -138,10 +142,6 @@ protected:
     std::vector<std::unique_ptr<RTC::OutPort<RTC::TimedDoubleSeq> > > m_tgtEEWrenchOut_;
     std::vector<RTC::TimedDoubleSeq> m_actEEWrench_; // Generate World frame. EndEffector origin. 要素数及び順番はgaitParam_.eeNameと同じ
     std::vector<std::unique_ptr<RTC::OutPort<RTC::TimedDoubleSeq> > > m_actEEWrenchOut_;
-    OpenHRP::TimedLandingPosition m_landingTarget_; // steppable_region合図
-    RTC::OutPort<OpenHRP::TimedLandingPosition> m_landingTargetOut_;
-    OpenHRP::TimedSteppableRegion m_steppableRegion_;
-    RTC::InPort<OpenHRP::TimedSteppableRegion> m_steppableRegionIn_;
   };
   Ports ports_;
 
