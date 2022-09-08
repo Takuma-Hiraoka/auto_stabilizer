@@ -140,6 +140,8 @@ protected:
     std::vector<std::unique_ptr<RTC::OutPort<RTC::TimedDoubleSeq> > > m_actEEWrenchOut_;
     OpenHRP::TimedLandingPosition m_landingTarget_; // steppable_region合図
     RTC::OutPort<OpenHRP::TimedLandingPosition> m_landingTargetOut_;
+    OpenHRP::TimedSteppableRegion m_steppableRegion_;
+    RTC::InPort<OpenHRP::TimedSteppableRegion> m_steppableRegionIn_;
   };
   Ports ports_;
 

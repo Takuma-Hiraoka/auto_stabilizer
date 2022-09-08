@@ -45,7 +45,8 @@ AutoStabilizer::Ports::Ports() :
   m_actCogOut_("actCogOut", m_actCog_),
   m_actDcmOut_("actDcmOut", m_actDcm_),
 
-  m_landingTargetOut_("landingTarget", m_landingTarget_),
+  m_landingTargetOut_("landingTargetOut", m_landingTarget_),
+  m_steppableRegionIn_("steppableRegionIn", m_steppableRegion_),
 
   m_AutoStabilizerServicePort_("AutoStabilizerService"),
 
@@ -81,7 +82,8 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
   this->addOutPort("tgtZmpOut", this->ports_.m_tgtZmpOut_);
   this->addOutPort("actCogOut", this->ports_.m_actCogOut_);
   this->addOutPort("actDcmOut", this->ports_.m_actDcmOut_);
-  this->addOutPort("landingTarget", this->ports_.m_landingTargetOut_);
+  this->addOutPort("landingTargetOut", this->ports_.m_landingTargetOut_);
+  this->addInPort("steppableRegionIn", this->ports_.m_steppableRegionIn_);
   this->ports_.m_AutoStabilizerServicePort_.registerProvider("service0", "AutoStabilizerService", this->ports_.m_service0_);
   this->addPort(this->ports_.m_AutoStabilizerServicePort_);
   this->ports_.m_RobotHardwareServicePort_.registerConsumer("service0", "RobotHardwareService", this->ports_.m_robotHardwareService0_);
