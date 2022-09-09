@@ -309,7 +309,7 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
 }
 
 // static function
-bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& ports, cnoid::BodyPtr refRobotRaw, cnoid::BodyPtr actRobotRaw, std::vector<cnoid::Vector6>& refEEWrenchOrigin, std::vector<cpp_filters::TwoPointInterpolatorSE3>& refEEPoseRaw){
+bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& ports, cnoid::BodyPtr refRobotRaw, cnoid::BodyPtr actRobotRaw, std::vector<cnoid::Vector6>& refEEWrenchOrigin, std::vector<cpp_filters::TwoPointInterpolatorSE3>& refEEPoseRaw, const GaitParam& gaitParam, FootStepGenerator& footStepGenerator){
   bool qRef_updated = false;
   if(ports.m_qRefIn_.isNew()){
     ports.m_qRefIn_.read();
@@ -415,6 +415,24 @@ bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& por
     }
   }
 
+  if(ports.m_steppableRegionIn_.isNew()){
+    ports.m_steppableRegionIn_.read();
+    if ((gaitParam.footstepNodesList[0].isSupportPhase[RLEG] && (ports.m_steppableRegion_.data.l_r == 0)) ||
+	(gaitParam.footstepNodesList[0].isSupportPhase[LLEG] && (ports.m_steppableRegion_.data.l_r == 1))){ //現在支持脚と計算時支持脚が同じ
+      footStepGenerator.steppable_region.resize(ports.m_steppableRegion_.data.region.length());
+      footStepGenerator.steppable_height.resize(ports.m_steppableRegion_.data.region.length());
+      for (int i=0; i<footStepGenerator.steppable_region.size(); i++){
+	footStepGenerator.steppable_region[i].resize(ports.m_steppableRegion_.data.region[i].length()/3);
+	double height_sum = 0.0;
+	for (int j=0; j<footStepGenerator.steppable_region[i].size(); j++){
+	  footStepGenerator.steppable_region[i][j](0) = ports.m_steppableRegion_.data.region[i][3*j];
+	  footStepGenerator.steppable_region[i][j](1) = ports.m_steppableRegion_.data.region[i][3*j+1];
+	  height_sum += ports.m_steppableRegion_.data.region[i][3*j+2];
+	}
+	footStepGenerator.steppable_height[i] = height_sum / footStepGenerator.steppable_region[i].size();
+      }
+    }
+  }
 
   return qRef_updated;
 }
@@ -693,7 +711,7 @@ RTC::ReturnCode_t AutoStabilizer::onExecute(RTC::UniqueId ec_id){
   std::string instance_name = std::string(this->m_profile.instance_name);
   this->loop_++;
 
-  if(!AutoStabilizer::readInPortData(this->dt_, this->ports_, this->gaitParam_.refRobotRaw, this->gaitParam_.actRobotRaw, this->gaitParam_.refEEWrenchOrigin, this->gaitParam_.refEEPoseRaw)) return RTC::RTC_OK;  // qRef が届かなければ何もしない
+  if(!AutoStabilizer::readInPortData(this->dt_, this->ports_, this->gaitParam_.refRobotRaw, this->gaitParam_.actRobotRaw, this->gaitParam_.refEEWrenchOrigin, this->gaitParam_.refEEPoseRaw, this->gaitParam_, this->footStepGenerator_)) return RTC::RTC_OK;  // qRef が届かなければ何もしない
 
   this->mode_.update(this->dt_);
   this->gaitParam_.update(this->dt_);
