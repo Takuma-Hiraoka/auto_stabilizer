@@ -535,7 +535,32 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
   // std::cerr << candidates << std::endl;
 
   // 2. steppable: 達成不可の場合は、考慮しない
+  {
+    std::vector<std::vector<cnoid::Vector3> > steppableHulls; // generate frame.
+    for(int i=0;i<this->steppable_region.size();i++){
+      std::vector<cnoid::Vector3> steppableHull;
+      for(int j=0;j<this->steppable_region[i].size();j++){
+	cnoid::Vector3 p = supportPoseHorizontal * cnoid::Vector3(this->steppable_region[i][j](0), this->steppable_region[i][j](1),0);
+	steppableHull.emplace_back(p);
+      }
+      steppableHulls.emplace_back(steppableHull);
+    }
+    std::vector<std::pair<std::vector<cnoid::Vector3>, double> > nextCandidates;
+    for(int i=0;i<candidates.size();i++){
+      for(int j=0;j<steppableHulls.size();j++){
+	std::vector<cnoid::Vector3> hull = mathutil::calcIntersectConvexHull(candidates[i].first, steppableHulls[j]);
+	if(hull.size() > 0) nextCandidates.emplace_back(hull, candidates[i].second);
+      }
+    }
+    if(nextCandidates.size() > 0) candidates = nextCandidates;
+  }
+
+  // std::cerr << "steppable" << std::endl;
+  // std::cerr << candidates << std::endl;
+  
   // TODO. Z高さの扱い.(DOWN_PHASEのときはfootstepNodesList[0]のdstCoordsはgenCoordsよりも高い位置に変更されることはない) (高低差と時間の関係)
+  // TODO 初期値、regionが来ない場合
+  // TODO 達成不可の場合
 
   // 3. capturable: 達成不可の場合は、可能な限り近い位置. 複数ある場合は時間が速い方優先. (次の一歩に期待) (角運動量 TODO)
   // 次の両足支持期終了時に入るケースでもOKにしたい
@@ -664,8 +689,23 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
 
   // 修正を適用
   cnoid::Vector3 nextDstCoordsPos = candidates[0].first[0];
+
+  // 足上げ高さ
+  for(int i=0;i<this->steppable_region.size();i++){
+      std::vector<cnoid::Vector3> steppableHull;
+      for(int j=0;j<this->steppable_region[i].size();j++){
+	cnoid::Vector3 p = supportPoseHorizontal * cnoid::Vector3(this->steppable_region[i][j](0), this->steppable_region[i][j](1),0);
+	steppableHull.emplace_back(p);
+      }
+      if(mathutil::isInsideHull(nextDstCoordsPos,steppableHull)){
+	nextDstCoordsPos[2] = supportPoseHorizontal.translation()[2] + this->steppable_height[i];
+	if(gaitParam.swingState[swingLeg] == GaitParam::DOWN_PHASE){
+	  nextDstCoordsPos[2] = std::min(this->steppable_height[i], gaitParam.dstCoordsOrg[swingLeg].translation()[2]);
+	}
+      }
+    }
   cnoid::Vector3 displacement = nextDstCoordsPos - footstepNodesList[0].dstCoords[swingLeg].translation();
-  displacement[2] = 0.0;
+  if (nextDstCoordsPos[2]) == 0) displacement[2] = 0.0; //steppable region外の場合
   this->transformFutureSteps(footstepNodesList, 0, displacement);
   footstepNodesList[0].remainTime = candidates[0].second;
 }
