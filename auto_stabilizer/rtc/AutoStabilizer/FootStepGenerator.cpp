@@ -557,8 +557,7 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
 
   // std::cerr << "steppable" << std::endl;
   // std::cerr << candidates << std::endl;
-  
-  // TODO. Z高さの扱い.(DOWN_PHASEのときはfootstepNodesList[0]のdstCoordsはgenCoordsよりも高い位置に変更されることはない) (高低差と時間の関係)
+
   // TODO 初期値、regionが来ない場合
   // TODO 達成不可の場合
 
@@ -691,6 +690,8 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
   cnoid::Vector3 nextDstCoordsPos = candidates[0].first[0];
 
   // 足上げ高さ
+  // 高さ0と仮定してcapturableな位置を求め、段差分の高さを足し込む．
+  // TODO 高さと領域の関係．（高さも考慮してcapturebleかを判定するか、角運動量補償等を行わないと段差を登れない）
   for(int i=0;i<this->steppable_region.size();i++){
       std::vector<cnoid::Vector3> steppableHull;
       for(int j=0;j<this->steppable_region[i].size();j++){
@@ -704,8 +705,8 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
 	}
       }
     }
-  cnoid::Vector3 displacement = nextDstCoordsPos - footstepNodesList[0].dstCoords[swingLeg].translation();
-  if (nextDstCoordsPos[2]) == 0) displacement[2] = 0.0; //steppable region外の場合
+  cnoid::Vector3 displacement = nextDstCoordsPos - footstepNodesList[0].dstCoords[swingLeg].translation(); // 足と同じ高さのregionも誤差により足より少し低くなるため、水平面でも足をやや下に突き出すような挙動になる．
+  if(nextDstCoordsPos[2] == 0) displacement[2] = 0.0; //steppable region外の場合．一時的にsteppable region外になることがあり、そのときに前回の足上げ高さを引いてしまう．
   this->transformFutureSteps(footstepNodesList, 0, displacement);
   footstepNodesList[0].remainTime = candidates[0].second;
 }
