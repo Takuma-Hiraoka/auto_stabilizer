@@ -534,7 +534,8 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
   // std::cerr << "strideLimitation と reachable" << std::endl;
   // std::cerr << candidates << std::endl;
 
-  // 2. steppable: 達成不可の場合は、考慮しない
+  // 2. steppable: 達成不可の場合は、考慮しない．起動時からregionが来るまではsteppable判定は行われない．
+  // stepable_regionが来ない場合、前のregionを使う．
   {
     std::vector<std::vector<cnoid::Vector3> > steppableHulls; // generate frame.
     for(int i=0;i<this->steppable_region.size();i++){
@@ -557,9 +558,6 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
 
   // std::cerr << "steppable" << std::endl;
   // std::cerr << candidates << std::endl;
-
-  // TODO 初期値、regionが来ない場合
-  // TODO 達成不可の場合
 
   // 3. capturable: 達成不可の場合は、可能な限り近い位置. 複数ある場合は時間が速い方優先. (次の一歩に期待) (角運動量 TODO)
   // 次の両足支持期終了時に入るケースでもOKにしたい
