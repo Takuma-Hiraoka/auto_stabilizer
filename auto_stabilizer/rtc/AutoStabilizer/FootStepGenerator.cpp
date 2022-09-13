@@ -699,7 +699,7 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
       if(mathutil::isInsideHull(nextDstCoordsPos,steppableHull)){
 	nextDstCoordsPos[2] = supportPoseHorizontal.translation()[2] + this->steppable_height[i];
 	if(gaitParam.swingState[swingLeg] == GaitParam::DOWN_PHASE){
-	  nextDstCoordsPos[2] = std::min(this->steppable_height[i], gaitParam.dstCoordsOrg[swingLeg].translation()[2]);
+	  nextDstCoordsPos[2] = std::min(nextDstCoordsPos[2], gaitParam.dstCoordsOrg[swingLeg].translation()[2]);
 	}
       }
     }
