@@ -12,8 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   #prioritized_inverse_kinematics_solver
   cpp_filters
   #ik_constraint_joint_limit_table
-  hrpsys_ros_bridge
   joint_limit_table
+  auto_stabilizer_msgs
   )
 find_package(choreonoid REQUIRED)
 find_package(OsqpEigen REQUIRED)

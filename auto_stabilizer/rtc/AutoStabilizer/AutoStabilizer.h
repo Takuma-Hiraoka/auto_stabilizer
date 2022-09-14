@@ -26,6 +26,7 @@
 
 #include "AutoStabilizerService_impl.h"
 #include "hrpsys/idl/RobotHardwareService.hh"
+#include "auto_stabilizer_msgs/idl/AutoStabilizer.hh"
 #include "GaitParam.h"
 #include "RefToGenFrameConverter.h"
 #include "ActToGenFrameConverter.h"
