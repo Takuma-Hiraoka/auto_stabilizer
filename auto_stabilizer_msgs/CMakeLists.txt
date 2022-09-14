@@ -60,7 +60,7 @@ catkin_package(
 
 rtmbuild2_genidl()
 
-add_custom_target(genidl All DEPENDS RTMBUILD_${PROJECT_NAME}_genrpc)
+add_custom_target(genidl All DEPENDS RTMBUILD2_${PROJECT_NAME}_genrpc)
 
 #############
 ## Testing ##
