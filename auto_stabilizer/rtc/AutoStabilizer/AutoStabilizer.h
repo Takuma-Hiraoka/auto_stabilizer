@@ -100,8 +100,8 @@ protected:
     std::vector<RTC::TimedPose3D> m_refEEPose_; // Reference World frame. 要素数及び順番はgaitParam_.eeNameと同じ
     std::vector<std::unique_ptr<RTC::InPort<RTC::TimedPose3D> > > m_refEEPoseIn_;
     RTC::Time refEEPoseLastUpdateTime_; // m_refEEPoseIn_のどれかに最後にdataが届いたときの、m_qRef_.tmの時刻
-    OpenHRP::TimedSteppableRegion m_steppableRegion_;
-    RTC::InPort<OpenHRP::TimedSteppableRegion> m_steppableRegionIn_;
+    auto_stabilizer_msgs::TimedSteppableRegion m_steppableRegion_;
+    RTC::InPort<auto_stabilizer_msgs::TimedSteppableRegion> m_steppableRegionIn_;
     
     RTC::TimedDoubleSeq m_q_;
     RTC::OutPort<RTC::TimedDoubleSeq> m_qOut_;
@@ -111,8 +111,8 @@ protected:
     RTC::OutPort<RTC::TimedPose3D> m_genBasePoseOut_;
     RTC::TimedDoubleSeq m_genBaseTform_;  // Generate World frame
     RTC::OutPort<RTC::TimedDoubleSeq> m_genBaseTformOut_; // for HrpsysSeqStateROSBridge
-    OpenHRP::TimedLandingPosition m_landingTarget_;
-    RTC::OutPort<OpenHRP::TimedLandingPosition> m_landingTargetOut_; // steppable_region合図
+    auto_stabilizer_msgs::TimedLandingPosition m_landingTarget_;
+    RTC::OutPort<auto_stabilizer_msgs::TimedLandingPosition> m_landingTargetOut_; // steppable_region合図
 
     AutoStabilizerService_impl m_service0_;
     RTC::CorbaPort m_AutoStabilizerServicePort_;

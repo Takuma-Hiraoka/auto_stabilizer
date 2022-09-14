@@ -3,7 +3,7 @@
 
 #include "ExtendedDataTypes.idl"
 
-module OpenHRP
+module auto_stabilizer_msgs
 {
   struct LandingPosition
   {
