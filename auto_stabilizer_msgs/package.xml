@@ -51,6 +51,7 @@
   <build_depend>rtmbuild2</build_depend>
   <build_export_depend>rtmbuild2</build_export_depend>
   <exec_depend>rtmbuild2</exec_depend>
+  <depend>geometry_msgs</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

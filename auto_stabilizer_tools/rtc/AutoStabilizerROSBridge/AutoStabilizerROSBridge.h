@@ -7,6 +7,8 @@
 #include <rtm/DataInPort.h>
 
 #include <auto_stabilizer_msgs/idl/AutoStabilizer.hh>
+#include <auto_stabilizer_msgs/SteppableRegion.h>
+#include <auto_stabilizer_msgs/LandingPosition.h>
 
 #include <ros/ros.h>
 
@@ -16,15 +18,17 @@ protected:
 
   auto_stabilizer_msgs::TimedLandingPosition m_landingTarget_;
   RTC::InPort <auto_stabilizer_msgs::TimedLandingPosition> m_landingTargetIn_;
-  ros::Publisher pub_;
+  ros::Publisher landing_target_pub_;
 
-  ros::Subscriber sub_;
+  ros::Subscriber steppable_region_sub_;
   auto_stabilizer_msgs::TimedSteppableRegion m_steppableRegion_;
   RTC::OutPort <auto_stabilizer_msgs::TimedSteppableRegion> m_steppableRegionOut_;
 public:
   AutoStabilizerROSBridge(RTC::Manager* manager);
   virtual RTC::ReturnCode_t onInitialize();
   virtual RTC::ReturnCode_t onExecute(RTC::UniqueId ec_id);
+
+  void onSteppableRegionCB(const auto_stabilizer_msgs::SteppableRegion::ConstPtr& msg);
   
 };
 

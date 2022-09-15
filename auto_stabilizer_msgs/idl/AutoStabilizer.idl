@@ -5,7 +5,7 @@
 
 module auto_stabilizer_msgs
 {
-  struct LandingPosition
+  struct LandingPositionIdl
   {
     double x;
     double y;
@@ -16,7 +16,7 @@ module auto_stabilizer_msgs
     long l_r; // 0: right. 1: left.
   };
 
-  struct SteppableRegion
+  struct SteppableRegionIdl
   {
     sequence<sequence<double> > region;
     long l_r; // 0: right. 1: left.
@@ -25,12 +25,12 @@ module auto_stabilizer_msgs
   struct TimedLandingPosition
   {
     RTC::Time tm;
-    LandingPosition data;
+    LandingPositionIdl data;
   };
   struct TimedSteppableRegion
   {
     RTC::Time tm;
-    SteppableRegion data;
+    SteppableRegionIdl data;
   };
 };
 

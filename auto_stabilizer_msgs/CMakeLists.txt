@@ -1,14 +1,19 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(auto_stabilizer_msgs)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
+set(CMAKE_BUILD_TYPE Release)
+
+# rtmbuild has non exist dependency                                                                                                                                                                         
+# (ROSBUILD_genmsg_cpp) and (RTMBUILD_${PROJECT_NAME}_genidl)                                                                                                                                               
+cmake_policy(SET CMP0046 OLD)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   rtmbuild2
+  geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -26,7 +31,9 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Generate messages in the 'msg' folder
 add_message_files(
-   FILES
+  FILES
+  LandingPosition.msg
+  SteppableRegion.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -36,7 +43,7 @@ add_message_files(
 #   Service2.srv
 # )
 
-rtmbuild2_init()
+rtmbuild2_init(geometry_msgs)
 
 ###################################
 ## catkin specific configuration ##
