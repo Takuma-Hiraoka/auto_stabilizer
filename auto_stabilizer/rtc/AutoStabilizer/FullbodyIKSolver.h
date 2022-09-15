@@ -16,6 +16,7 @@ public:
   mutable std::shared_ptr<IK::PositionConstraint> rootPositionConstraint = std::make_shared<IK::PositionConstraint>();
   mutable std::shared_ptr<IK::COMConstraint> comConstraint = std::make_shared<IK::COMConstraint>();
   mutable std::shared_ptr<IK::AngularMomentumConstraint> angularMomentumConstraint = std::make_shared<IK::AngularMomentumConstraint>();
+  mutable std::vector<std::shared_ptr<IK::PositionConstraint> > collisionConstraint;
 protected:
   // クリアしなくても副作用はあまりない
   mutable cnoid::VectorX jlim_avoid_weight;
@@ -25,6 +26,7 @@ public:
     for(int i=0;i<gaitParam.eeName.size();i++) ikEEPositionConstraint.push_back(std::make_shared<IK::PositionConstraint>());
     refJointAngleConstraint.clear();
     for(int i=0;i<genRobot->numJoints();i++) refJointAngleConstraint.push_back(std::make_shared<IK::JointAngleConstraint>());
+    collisionConstraint.clear();
   }
 
   bool solveFullbodyIK(double dt, const GaitParam& gaitParam,

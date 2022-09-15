@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   #ik_constraint_joint_limit_table
   joint_limit_table
   auto_stabilizer_msgs
+  collision_checker_msgs
   )
 find_package(choreonoid REQUIRED)
 find_package(OsqpEigen REQUIRED)

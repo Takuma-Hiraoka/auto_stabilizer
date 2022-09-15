@@ -9,6 +9,7 @@
 #include <cpp_filters/FirstOrderLowPassFilter.h>
 #include <joint_limit_table/JointLimitTable.h>
 #include "FootGuidedController.h"
+#include "collision_checker_msgs/idl/Collision.hh"
 
 enum leg_enum{RLEG=0, LLEG=1, NUM_LEGS=2};
 
@@ -119,6 +120,16 @@ public:
 
   // FullbodyIKSolver
   cnoid::BodyPtr genRobot; // output. 関節位置制御用
+  class Collision {
+  public:
+    std::string link1;
+    cnoid::Position point1;
+    std::string link2;
+    cnoid::Position point2;
+    cnoid::Vector3 direction21;
+    double distance;
+  };
+  std::vector<Collision> collision;
 
 public:
   bool isStatic() const{ // 現在static状態かどうか
