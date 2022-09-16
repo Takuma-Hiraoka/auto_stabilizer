@@ -19,7 +19,8 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
   std::vector<std::shared_ptr<IK::IKConstraint> > ikConstraint1;
   std::vector<std::shared_ptr<IK::IKConstraint> > ikConstraint2;
 
-  //collision
+  // collision
+  // collisionがなくなったとき、最後のcollisionが残り続ける
   this->collisionConstraint.clear();
   for (int i=0;i<gaitParam.collision.size();i++) this->collisionConstraint.push_back(std::make_shared<IK::ClientCollisionConstraint>());
   for(int i=0;i<gaitParam.collision.size();i++){
@@ -33,7 +34,7 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
     this->collisionConstraint[i]->weight() = 1.0;
     this->collisionConstraint[i]->velocityDamper() = 1.0;
     this->collisionConstraint[i]->direction() = gaitParam.collision[i].direction21;
-    //ikConstraint.push_back(this->collisionConstraint[i]);
+    ikConstraint1.push_back(this->collisionConstraint[i]);
     }
   
   // EEF

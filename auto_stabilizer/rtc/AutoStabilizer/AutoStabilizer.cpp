@@ -436,7 +436,7 @@ bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& por
     }
   }
 
-  if(ports.m_collisionIn_.isNew() && !gaitParam.isStatic()) { // 歩かないときは干渉回避しない．手でものを取り出す用
+  if(ports.m_collisionIn_.isNew()) {
     ports.m_collisionIn_.read();
     collision.resize(ports.m_collision_.data.length());
     for (int i=0; i<collision.size(); i++){
@@ -454,10 +454,7 @@ bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& por
       collision[i].direction21[1] = ports.m_collision_.data[i].direction21.y;
       collision[i].direction21[2] = ports.m_collision_.data[i].direction21.z;
       collision[i].distance = ports.m_collision_.data[i].distance;
-      std::cerr << collision[i].link1 << std::endl; 
     }
-  } else {
-    collision.clear();
   }
   return qRef_updated;
 }

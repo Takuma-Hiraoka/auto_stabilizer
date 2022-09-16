@@ -16,24 +16,6 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
   }
 
   std::vector<std::shared_ptr<IK::IKConstraint> > ikConstraint;
-
-  //collision
-  this->collisionConstraint.clear();
-  for (int i=0;i<gaitParam.collision.size();i++) this->collisionConstraint.push_back(std::make_shared<IK::PositionConstraint>());
-  for(int i=0;i<gaitParam.collision.size();i++){
-    this->collisionConstraint[i]->A_link() = genRobot->link(gaitParam.collision[i].link1);
-    this->collisionConstraint[i]->A_localpos() = gaitParam.collision[i].point1;
-    this->collisionConstraint[i]->B_link() = nullptr;
-    cnoid::Position collision_point = genRobot->link(gaitParam.collision[i].link1)->T() * gaitParam.collision[i].point1;
-    collision_point.translation() += gaitParam.collision[i].direction21 * 0.01;//(0.3 - gaitParam.collision[i].distance) / gaitParam.collision[i].distance; // 近接判定が0.01からとしたとき0.01にとどまるように
-    this->collisionConstraint[i]->B_localpos() = collision_point; //TODO
-    this->collisionConstraint[i]->maxError() << 50.0*dt, 50.0*dt, 50.0*dt, 1000.0*dt, 1000.0*dt, 1000.0*dt;
-    this->collisionConstraint[i]->precision() << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0; // 強制的にIKをmax loopまで回す
-    this->collisionConstraint[i]->weight() << 1.0, 1.0, 1.0, 0.0, 0.0, 0.0;
-    this->collisionConstraint[i]->eval_link() = nullptr;
-    this->collisionConstraint[i]->eval_localR() = cnoid::Matrix3::Identity();
-    ikConstraint.push_back(this->collisionConstraint[i]);
-    }
   
   // EEF
   for(int i=0;i<gaitParam.eeName.size();i++){
