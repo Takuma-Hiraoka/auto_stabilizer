@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   ik_constraint
   fullbody_inverse_kinematics_solver
   prioritized_qp
-  #prioritized_inverse_kinematics_solver
+  prioritized_inverse_kinematics_solver
   cpp_filters
   #ik_constraint_joint_limit_table
   joint_limit_table
@@ -42,7 +42,8 @@ add_library(AutoStabilizer SHARED
   ExternalForceHandler.cpp
   Stabilizer.cpp
   ImpedanceController.cpp
-  FullbodyIKSolver.cpp
+  #  FullbodyIKSolver.cpp
+  PrioritizedIKSolver.cpp
   LegManualController.cpp
   CmdVelGenerator.cpp
   MathUtil.cpp

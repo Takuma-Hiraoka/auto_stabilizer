@@ -37,7 +37,7 @@
 #include "ImpedanceController.h"
 #include "Stabilizer.h"
 #include "ExternalForceHandler.h"
-#include "FullbodyIKSolver.h"
+#include "PrioritizedIKSolver.h"
 #include "CmdVelGenerator.h"
 
 class AutoStabilizer : public RTC::DataFlowComponentBase{
