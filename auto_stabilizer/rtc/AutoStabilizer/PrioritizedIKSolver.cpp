@@ -18,23 +18,25 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
   std::vector<std::shared_ptr<IK::IKConstraint> > ikConstraint0;
   std::vector<std::shared_ptr<IK::IKConstraint> > ikConstraint1;
   std::vector<std::shared_ptr<IK::IKConstraint> > ikConstraint2;
+  std::vector<std::shared_ptr<IK::IKConstraint> > ikConstraint3;
 
   // collision
   // collisionがなくなったとき、最後のcollisionが残り続ける
   this->collisionConstraint.clear();
   for (int i=0;i<gaitParam.collision.size();i++) this->collisionConstraint.push_back(std::make_shared<IK::ClientCollisionConstraint>());
   for(int i=0;i<gaitParam.collision.size();i++){
+    if ((gaitParam.collision[i].link1 == "RLEG_JOINT5" )|| (gaitParam.collision[i].link1 == "LLEG_JOINT5" ) || (gaitParam.collision[i].link1 == "RLEG_JOINT4" )|| (gaitParam.collision[i].link1 == "LLEG_JOINT4" )) continue; // 足裏と脛の干渉は無視する
     this->collisionConstraint[i]->A_link() = genRobot->link(gaitParam.collision[i].link1);
     this->collisionConstraint[i]->A_localp() = gaitParam.collision[i].point1.translation();
     this->collisionConstraint[i]->B_link() = nullptr;
     this->collisionConstraint[i]->B_localp() = gaitParam.collision[i].point2.translation();
-    this->collisionConstraint[i]->tolerance() = 0.1; //TODO
+    this->collisionConstraint[i]->tolerance() = 0.03; //TODO
     this->collisionConstraint[i]->maxError() = 10.0*dt;
     this->collisionConstraint[i]->precision() = 0.0; // 強制的にIKをmax loopまで回す
     this->collisionConstraint[i]->weight() = 1.0;
-    this->collisionConstraint[i]->velocityDamper() = 1.0;
+    this->collisionConstraint[i]->velocityDamper() = 1.0 / dt;
     this->collisionConstraint[i]->direction() = gaitParam.collision[i].direction21;
-    ikConstraint1.push_back(this->collisionConstraint[i]);
+    ikConstraint0.push_back(this->collisionConstraint[i]);
     }
   
   // EEF
@@ -49,8 +51,8 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
     else this->ikEEPositionConstraint[i]->weight() << 1.0, 1.0, 1.0, 1.0, 1.0, 1.0;
     this->ikEEPositionConstraint[i]->eval_link() = nullptr;
     this->ikEEPositionConstraint[i]->eval_localR() = this->ikEEPositionConstraint[i]->B_localpos().linear();
-    if(i<NUM_LEGS) ikConstraint0.push_back(this->ikEEPositionConstraint[i]);
-    else ikConstraint2.push_back(this->ikEEPositionConstraint[i]);
+    if(i<NUM_LEGS) ikConstraint1.push_back(this->ikEEPositionConstraint[i]);
+    else ikConstraint3.push_back(this->ikEEPositionConstraint[i]);
   }
 
   // COM
@@ -63,7 +65,7 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
     this->comConstraint->precision() << 0.0, 0.0, 0.0; // 強制的にIKをmax loopまで回す
     this->comConstraint->weight() << 3.0, 3.0, 1.0;
     this->comConstraint->eval_R() = cnoid::Matrix3::Identity();
-    ikConstraint0.push_back(this->comConstraint);
+    ikConstraint1.push_back(this->comConstraint);
   }
 
   // Angular Momentum
@@ -75,7 +77,7 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
     this->angularMomentumConstraint->weight() << 1e-4, 1e-4, 0.0; // TODO
     this->angularMomentumConstraint->dt() = dt;
     this->comConstraint->eval_R() = cnoid::Matrix3::Identity();
-    ikConstraint2.push_back(this->angularMomentumConstraint);
+    ikConstraint3.push_back(this->angularMomentumConstraint);
   }
 
   // root
@@ -90,7 +92,7 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
     //this->rootPositionConstraint->weight() << 0.0, 0.0, 0.0, 3e-1, 3e-1, 3e-1;
     this->rootPositionConstraint->eval_link() = nullptr;
     this->rootPositionConstraint->eval_localR() = cnoid::Matrix3::Identity();
-    ikConstraint1.push_back(this->rootPositionConstraint);
+    ikConstraint2.push_back(this->rootPositionConstraint);
   }
 
   // reference angle
@@ -102,8 +104,33 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
       this->refJointAngleConstraint[i]->weight() = 1e-1; // 小さい値すぎると、qp終了判定のtoleranceによって無視されてしまう
       this->refJointAngleConstraint[i]->targetq() = gaitParam.refRobot->joint(i)->q();
       this->refJointAngleConstraint[i]->precision() = 0.0; // 強制的にIKをmax loopまで回す
-      ikConstraint1.push_back(this->refJointAngleConstraint[i]);
+      ikConstraint3.push_back(this->refJointAngleConstraint[i]);
     }
+  }
+
+  // joint limit
+  {    
+    for(size_t i=0;i<genRobot->numJoints();i++){
+      if(!gaitParam.jointControllable[i]) continue;
+      this->jointLimitConstraint[i]->joint() = genRobot->joint(i);
+      this->jointLimitConstraint[i]->maxError() = 1.0 * dt; 
+      this->jointLimitConstraint[i]->weight() = 1.0; 
+      this->jointLimitConstraint[i]->precision() = 0.0; // 強制的にIKをmax loopまで回す
+      ikConstraint0.push_back(this->jointLimitConstraint[i]);
+    }    
+  }
+
+  // joint velocity
+  {    
+    for(size_t i=0;i<genRobot->numJoints();i++){
+      if(!gaitParam.jointControllable[i]) continue;
+      this->jointVelocityConstraint[i]->joint() = genRobot->joint(i);
+      this->jointVelocityConstraint[i]->dt() = dt;
+      this->jointVelocityConstraint[i]->maxError() = 0.1 * dt; 
+      this->jointVelocityConstraint[i]->weight() = 1.0; 
+      this->jointVelocityConstraint[i]->precision() = 0.0; // 強制的にIKをmax loopまで回す
+      ikConstraint0.push_back(this->jointVelocityConstraint[i]);
+    }    
   }
 
   // 特異点近傍で振動するようなことは起こりにくいが、歩行動作中の一瞬だけIKがときにくい姿勢があってすぐに解ける姿勢に戻るといった場合に、その一瞬の間だけIKを解くために頑張って姿勢が大きく変化するので、危険.
@@ -116,7 +143,7 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
   for(size_t i=0;i<genRobot->numJoints();i++){
     variables.push_back(genRobot->joint(i));
   }
-  std::vector<std::vector<std::shared_ptr<IK::IKConstraint> > > constraints{ikConstraint0,ikConstraint1,ikConstraint2};
+  std::vector<std::vector<std::shared_ptr<IK::IKConstraint> > > constraints{ikConstraint0,ikConstraint1,ikConstraint2,ikConstraint3};
   for(size_t i=0;i<constraints.size();i++){
     for(size_t j=0;j<constraints[i].size();j++){
       constraints[i][j]->debuglevel() = 0;//debug
@@ -140,7 +167,7 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
   //     ここまでは、各タスクが滑らかに変化するように作ればよく、実用上のほとんどのケースでは各タスクは滑らかに変化するので、問題ない.
   //     ところが、joint_limit_tableを用いてjoint->q_upper()とjoint->q_lower()を更新すると、limit側が勝手に動くので、タスクに関係なく、limitからの距離が近づいたり離れたりする. すると、ロボットが振動的になってしまうことがある.
   //     不等式制約が扱えるQPベースのIKなら、この問題は発生しない.
-  for(int i=0;i<gaitParam.refRobot->numJoints();i++){
+  /*  for(int i=0;i<gaitParam.refRobot->numJoints();i++){
     if(!gaitParam.jointControllable[i]) continue;
     cnoid::LinkPtr joint = genRobot->joint(i);
     double u = gaitParam.refRobot->joint(i)->q_upper();
@@ -150,6 +177,6 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
       l = std::max(l,gaitParam.jointLimitTables[i][j]->getLlimit());
     }
     joint->q() = std::min(u, std::max(l, joint->q()));
-  }
+    }*/
   return true;
 }

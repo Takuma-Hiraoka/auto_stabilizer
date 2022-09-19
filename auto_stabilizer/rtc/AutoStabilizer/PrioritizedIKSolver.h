@@ -7,6 +7,8 @@
 #include <ik_constraint/JointAngleConstraint.h>
 #include <ik_constraint/AngularMomentumConstraint.h>
 #include <ik_constraint/ClientCollisionConstraint.h>
+#include <ik_constraint/JointLimitConstraint.h>
+#include <ik_constraint/JointVelocityConstraint.h>
 
 class FullbodyIKSolver{
 public:
@@ -18,6 +20,8 @@ public:
   mutable std::shared_ptr<IK::COMConstraint> comConstraint = std::make_shared<IK::COMConstraint>();
   mutable std::shared_ptr<IK::AngularMomentumConstraint> angularMomentumConstraint = std::make_shared<IK::AngularMomentumConstraint>();
   mutable std::vector<std::shared_ptr<IK::ClientCollisionConstraint> > collisionConstraint;
+  mutable std::vector<std::shared_ptr<IK::JointLimitConstraint> > jointLimitConstraint;
+  mutable std::vector<std::shared_ptr<IK::JointVelocityConstraint> > jointVelocityConstraint;
 protected:
   // クリアしなくても副作用はあまりない
   mutable cnoid::VectorX jlim_avoid_weight;
@@ -27,6 +31,10 @@ public:
     for(int i=0;i<gaitParam.eeName.size();i++) ikEEPositionConstraint.push_back(std::make_shared<IK::PositionConstraint>());
     refJointAngleConstraint.clear();
     for(int i=0;i<genRobot->numJoints();i++) refJointAngleConstraint.push_back(std::make_shared<IK::JointAngleConstraint>());
+    jointVelocityConstraint.clear();
+    for(int i=0;i<genRobot->numJoints();i++) jointVelocityConstraint.push_back(std::make_shared<IK::JointVelocityConstraint>());
+    jointLimitConstraint.clear();
+    for(int i=0;i<genRobot->numJoints();i++) jointLimitConstraint.push_back(std::make_shared<IK::JointLimitConstraint>());
   }
 
   bool solveFullbodyIK(double dt, const GaitParam& gaitParam,
