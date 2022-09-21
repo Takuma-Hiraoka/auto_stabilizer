@@ -129,7 +129,8 @@ public:
     cnoid::Vector3 direction21;
     double distance;
   };
-  std::vector<Collision> collision;
+  std::vector<Collision> envCollision;
+  std::vector<Collision> selfCollision;
 
 public:
   bool isStatic() const{ // 現在static状態かどうか

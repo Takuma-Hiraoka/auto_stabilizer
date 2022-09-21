@@ -9,6 +9,7 @@
 #include <ik_constraint/ClientCollisionConstraint.h>
 #include <ik_constraint/JointLimitConstraint.h>
 #include <ik_constraint/JointVelocityConstraint.h>
+#include <prioritized_inverse_kinematics_solver/PrioritizedInverseKinematicsSolver.h>
 
 class FullbodyIKSolver{
 public:
@@ -19,12 +20,14 @@ public:
   mutable std::shared_ptr<IK::PositionConstraint> rootPositionConstraint = std::make_shared<IK::PositionConstraint>();
   mutable std::shared_ptr<IK::COMConstraint> comConstraint = std::make_shared<IK::COMConstraint>();
   mutable std::shared_ptr<IK::AngularMomentumConstraint> angularMomentumConstraint = std::make_shared<IK::AngularMomentumConstraint>();
-  mutable std::vector<std::shared_ptr<IK::ClientCollisionConstraint> > collisionConstraint;
+  mutable std::vector<std::shared_ptr<IK::ClientCollisionConstraint> > selfcollisionConstraint;
+  mutable std::vector<std::shared_ptr<IK::ClientCollisionConstraint> > envcollisionConstraint;
   mutable std::vector<std::shared_ptr<IK::JointLimitConstraint> > jointLimitConstraint;
   mutable std::vector<std::shared_ptr<IK::JointVelocityConstraint> > jointVelocityConstraint;
 protected:
   // クリアしなくても副作用はあまりない
   mutable cnoid::VectorX jlim_avoid_weight;
+  mutable std::vector<std::shared_ptr<prioritized_qp_base::Task> > tasks;
 public:
   void init(const cnoid::BodyPtr& genRobot, const GaitParam& gaitParam){
     ikEEPositionConstraint.clear();
