@@ -28,7 +28,7 @@ public:
 public:
   // parameter
   std::vector<cpp_filters::TwoPointInterpolator<cnoid::Vector3> > copOffset = std::vector<cpp_filters::TwoPointInterpolator<cnoid::Vector3> >{cpp_filters::TwoPointInterpolator<cnoid::Vector3>(cnoid::Vector3(0.0,0.02,0.0),cnoid::Vector3::Zero(),cnoid::Vector3::Zero(),cpp_filters::HOFFARBIB),cpp_filters::TwoPointInterpolator<cnoid::Vector3>(cnoid::Vector3(0.0,-0.02,0.0),cnoid::Vector3::Zero(),cnoid::Vector3::Zero(),cpp_filters::HOFFARBIB)}; // 要素数2. rleg: 0. lleg: 1. endeffector frame. 足裏COPの目標位置. 幾何的な位置はcopOffset.value()無しで考えるが、目標COPを考えるときはcopOffset.value()を考慮する. クロスできたりジャンプできたりする脚でないと左右方向(外側向き)の着地位置修正は難しいので、その方向に転びそうになることが極力ないように内側にcopをオフセットさせておくとよい.  単位[m]. 滑らかに変化する.
-  std::vector<std::vector<cnoid::Vector3> > legHull = std::vector<std::vector<cnoid::Vector3> >(2, std::vector<cnoid::Vector3>{cnoid::Vector3(0.115,0.065,0.0),cnoid::Vector3(-0.105,0.065,0.0),cnoid::Vector3(-0.105,-0.065,0.0),cnoid::Vector3(0.115,-0.065,0.0)}); // 要素数2. rleg: 0. lleg: 1. endeffector frame.  凸形状で,上から見て半時計回り. Z成分はあったほうが計算上扱いやすいからありにしているが、0でなければならない. 単位[m]
+  std::vector<std::vector<cnoid::Vector3> > legHull = std::vector<std::vector<cnoid::Vector3> >(2, std::vector<cnoid::Vector3>{cnoid::Vector3(0.115,0.065,0.0),cnoid::Vector3(-0.095,0.065,0.0),cnoid::Vector3(-0.095,-0.065,0.0),cnoid::Vector3(0.115,-0.065,0.0)}); // 要素数2. rleg: 0. lleg: 1. endeffector frame.  凸形状で,上から見て半時計回り. Z成分はあったほうが計算上扱いやすいからありにしているが、0でなければならない. 単位[m]. JAXONでは、COPがY -0.1近くにくるとギア飛びしやすいので、少しYの下限を少なくしている
   std::vector<cpp_filters::TwoPointInterpolator<cnoid::Vector3> > defaultTranslatePos = std::vector<cpp_filters::TwoPointInterpolator<cnoid::Vector3> >(2,cpp_filters::TwoPointInterpolator<cnoid::Vector3>(cnoid::Vector3::Zero(),cnoid::Vector3::Zero(),cnoid::Vector3::Zero(),cpp_filters::HOFFARBIB)); // goPos, goVelocity, setFootSteps等するときの右脚と左脚の中心からの相対位置. また、reference frameとgenerate frameの対応付けに用いられる. (Z軸は鉛直). Z成分はあったほうが計算上扱いやすいからありにしているが、0でなければならない. RefToGenFrameConverterが「左右」という概念を使うので、X成分も0でなければならない. 単位[m] 滑らかに変化する.
   std::vector<cpp_filters::TwoPointInterpolator<double> > isManualControlMode = std::vector<cpp_filters::TwoPointInterpolator<double> >(2, cpp_filters::TwoPointInterpolator<double>(0.0, 0.0, 0.0, cpp_filters::LINEAR)); // 要素数2. 0: rleg. 1: lleg. 0~1. 連続的に変化する. 1ならicEETargetPoseに従い、refEEWrenchに応じて重心をオフセットする. 0ならImpedanceControlをせず、refEEWrenchを無視し、DampingControlを行わない. 静止状態で無い場合や、支持脚の場合は、勝手に0になる. 両足が同時に1になることはない. 1にするなら、RefToGenFrameConverter.refFootOriginWeightを0にしたほうが良い. 1の状態でStartAutoStabilizerすると、遊脚で始まる
 
@@ -53,7 +53,7 @@ public:
 
   // actToGenFrameConverter
   cnoid::BodyPtr actRobot; // actual. generate frame
-  cpp_filters::FirstOrderLowPassFilter<cnoid::Vector3> actCogVel = cpp_filters::FirstOrderLowPassFilter<cnoid::Vector3>(4.0, cnoid::Vector3::Zero());  // generate frame.  現在のCOM速度. cutoff=4.0Hzは今の歩行時間と比べて遅すぎる気もするが、実際のところ問題なさそう?
+  cpp_filters::FirstOrderLowPassFilter<cnoid::Vector3> actCogVel = cpp_filters::FirstOrderLowPassFilter<cnoid::Vector3>(3.5, cnoid::Vector3::Zero());  // generate frame.  現在のCOM速度. cutoff=4.0Hzは今の歩行時間と比べて遅すぎる気もするが、実際のところ問題なさそう? もとは4Hzだったが、 静止時に衝撃が加わると上下方向に左右交互に振動することがあるので少し小さくする必要がある. 3Hzにすると、追従性が悪くなってギアが飛んだ
   std::vector<cnoid::Position> actEEPose; // 要素数と順序はeeNameと同じ.generate frame
   std::vector<cnoid::Vector6> actEEWrench; // 要素数と順序はeeNameと同じ.generate frame. EndEffector origin. ロボットが受ける力
 
@@ -110,8 +110,6 @@ public:
   // Stabilizer
   cpp_filters::TwoPointInterpolator<cnoid::Vector3> stOffsetRootRpy = cpp_filters::TwoPointInterpolator<cnoid::Vector3>(cnoid::Vector3::Zero(),cnoid::Vector3::Zero(),cnoid::Vector3::Zero(),cpp_filters::LINEAR);; // gaitParam.footMidCoords座標系. stで計算された目標位置姿勢オフセット
   cnoid::Position stTargetRootPose = cnoid::Position::Identity(); // generate frame. stTargetRootPose = stOffsetRootRpy + refRobot->rootLink
-  std::vector<cpp_filters::TwoPointInterpolator<cnoid::Vector6> > stEEOffset = std::vector<cpp_filters::TwoPointInterpolator<cnoid::Vector6> >(2, cpp_filters::TwoPointInterpolator<cnoid::Vector6>(cnoid::Vector6::Zero(),cnoid::Vector6::Zero(),cnoid::Vector6::Zero(), cpp_filters::HOFFARBIB)); // 要素数2. rleg: 1. lleg: 1. generate frame. endEffector origin. stで計算されるオフセット(Damping Control)
-  std::vector<cnoid::Position> stEETargetPose; // 要素数と順序はeeNameと同じ.generate frame. stで計算された目標位置姿勢. stEETargetPose = stEEOffset + abcEETargetPose
   cnoid::Vector3 stTargetZmp; // generate frame. stで計算された目標ZMP
   std::vector<cnoid::Vector6> stEETargetWrench; // 要素数と順序はeeNameと同じ.generate frame. EndEffector origin. ロボットが受ける力
   std::vector<cpp_filters::TwoPointInterpolator<double> > stServoPGainPercentage; // 要素数と順序はrobot->numJoints()と同じ. 0~100. 現状, setGoal(*,dt)以下の時間でgoal指定するとwriteOutPortDataが破綻する
@@ -171,7 +169,6 @@ public:
     icEEOffset.push_back(cpp_filters::TwoPointInterpolator<cnoid::Vector6>(cnoid::Vector6::Zero(),cnoid::Vector6::Zero(),cnoid::Vector6::Zero(), cpp_filters::HOFFARBIB));
     icEETargetPose.push_back(cnoid::Position::Identity());
     abcEETargetPose.push_back(cnoid::Position::Identity());
-    stEETargetPose.push_back(cnoid::Position::Identity());
     stEETargetWrench.push_back(cnoid::Vector6::Zero());
   }
 
