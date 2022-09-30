@@ -118,6 +118,8 @@ protected:
     RTC::OutPort<RTC::TimedDoubleSeq> m_genBaseTformOut_; // for HrpsysSeqStateROSBridge
     auto_stabilizer_msgs::TimedLandingPosition m_landingTarget_;
     RTC::OutPort<auto_stabilizer_msgs::TimedLandingPosition> m_landingTargetOut_; // steppable_region合図
+    auto_stabilizer_msgs::TimedFootStepNodesList m_footStepNodesList_;
+    RTC::OutPort<auto_stabilizer_msgs::TimedFootStepNodesList> m_footStepNodesListOut_;
 
     AutoStabilizerService_impl m_service0_;
     RTC::CorbaPort m_AutoStabilizerServicePort_;

@@ -39,6 +39,7 @@ AutoStabilizer::Ports::Ports() :
   m_genBasePoseOut_("genBasePoseOut", m_genBasePose_),
   m_genBaseTformOut_("genBaseTformOut", m_genBaseTform_),
   m_landingTargetOut_("landingTargetOut", m_landingTarget_),
+  m_footStepNodesListOut_("footStepNodesListOut", m_footStepNodesList_),
   
   m_genBasePosOut_("genBasePosOut", m_genBasePos_),
   m_genBaseRpyOut_("genBaseRpyOut", m_genBaseRpy_),
@@ -79,6 +80,7 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
   this->addOutPort("genBasePoseOut", this->ports_.m_genBasePoseOut_);
   this->addOutPort("genBaseTformOut", this->ports_.m_genBaseTformOut_);
   this->addOutPort("landingTargetOut", this->ports_.m_landingTargetOut_);
+  this->addOutPort("footStepNodesListOut", this->ports_.m_footStepNodesListOut_);
   this->addOutPort("genBasePosOut", this->ports_.m_genBasePosOut_);
   this->addOutPort("genBaseRpyOut", this->ports_.m_genBaseRpyOut_);
   this->addOutPort("genCogOut", this->ports_.m_genCogOut_);
@@ -744,6 +746,29 @@ bool AutoStabilizer::writeOutPortData(AutoStabilizer::Ports& ports, const AutoSt
     ports.m_landingTarget_.data.l_r = gaitParam.footstepNodesList[0].isSupportPhase[RLEG] ? 0 : 1; // 歩き始めて片足支持期になってから着地位置修正を行うので、両足支持期を考慮する必要がないとしている。
     ports.m_landingTargetOut_.write(); 
   }
+
+  // collision avoidance
+  if(!gaitParam.isStatic()) {
+    ports.m_footStepNodesList_.tm = ports.m_qRef_.tm;
+    ports.m_footStepNodesList_.data.length(gaitParam.footstepNodesList.size());
+    for(int i=0;i<gaitParam.footstepNodesList.size();i++){
+      ports.m_footStepNodesList_.data[i].dstCoords.length(NUM_LEGS);
+      ports.m_footStepNodesList_.data[i].isSupportPhase.length(NUM_LEGS);
+      for(int j=0;j<NUM_LEGS;j++) {
+	ports.m_footStepNodesList_.data[i].dstCoords[j].position.x = gaitParam.footstepNodesList[i].dstCoords[j].translation()[0];
+	ports.m_footStepNodesList_.data[i].dstCoords[j].position.y = gaitParam.footstepNodesList[i].dstCoords[j].translation()[1];
+	ports.m_footStepNodesList_.data[i].dstCoords[j].position.x = gaitParam.footstepNodesList[i].dstCoords[j].translation()[2];
+	cnoid::Vector3 rpy = cnoid::rpyFromRot(gaitParam.footstepNodesList[i].dstCoords[j].linear());
+	ports.m_footStepNodesList_.data[i].dstCoords[j].orientation.r = rpy[0];
+	ports.m_footStepNodesList_.data[i].dstCoords[j].orientation.p = rpy[1];
+	ports.m_footStepNodesList_.data[i].dstCoords[j].orientation.y = rpy[2];
+	ports.m_footStepNodesList_.data[i].isSupportPhase[j] = gaitParam.footstepNodesList[i].isSupportPhase[j];
+	}
+      ports.m_footStepNodesList_.data[i].remainTime = gaitParam.footstepNodesList[i].remainTime;
+    }
+    ports.m_footStepNodesListOut_.write();
+  }
+  
   return true;
 }
 

@@ -32,6 +32,19 @@ module auto_stabilizer_msgs
     RTC::Time tm;
     SteppableRegionIdl data;
   };
+
+  struct FootStepNodes
+  {
+    sequence<RTC::Pose3D> dstCoords; // generate frame 0:right. 1: left.
+    sequence<boolean> isSupportPhase;
+    double remainTime;
+  };
+
+  struct TimedFootStepNodesList
+  {
+    RTC::Time tm;
+    sequence<FootStepNodes> data;
+  };
 };
 
 #endif
