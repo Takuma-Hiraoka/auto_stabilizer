@@ -33,13 +33,14 @@ AutoStabilizer::Ports::Ports() :
   m_steppableRegionIn_("steppableRegionIn", m_steppableRegion_),
   m_envCollisionIn_("envCollisionIn", m_envCollision_),
   m_selfCollisionIn_("selfCollisionIn", m_selfCollision_),
+  m_refFootStepNodesListIn_("refFootStepNodesListIn", m_refFootStepNodesList_),
   
   m_qOut_("q", m_q_),
   m_genTauOut_("genTauOut", m_genTau_),
   m_genBasePoseOut_("genBasePoseOut", m_genBasePose_),
   m_genBaseTformOut_("genBaseTformOut", m_genBaseTform_),
   m_landingTargetOut_("landingTargetOut", m_landingTarget_),
-  m_footStepNodesListOut_("footStepNodesListOut", m_footStepNodesList_),
+  m_footStepNodesListOut_("footStepNodesListOut", m_curFootStepNodesList_),
   
   m_genBasePosOut_("genBasePosOut", m_genBasePos_),
   m_genBaseRpyOut_("genBaseRpyOut", m_genBaseRpy_),
@@ -75,6 +76,7 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
   this->addInPort("steppableRegionIn", this->ports_.m_steppableRegionIn_);
   this->addInPort("envCollisionIn", this->ports_.m_envCollisionIn_);
   this->addInPort("selfCollisionIn", this->ports_.m_selfCollisionIn_);
+  this->addInPort("refFootStepNodesListIn", this->ports_.m_refFootStepNodesListIn_);
   this->addOutPort("q", this->ports_.m_qOut_);
   this->addOutPort("genTauOut", this->ports_.m_genTauOut_);
   this->addOutPort("genBasePoseOut", this->ports_.m_genBasePoseOut_);
@@ -315,7 +317,7 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
 }
 
 // static function
-bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& ports, cnoid::BodyPtr refRobotRaw, cnoid::BodyPtr actRobotRaw, std::vector<cnoid::Vector6>& refEEWrenchOrigin, std::vector<cpp_filters::TwoPointInterpolatorSE3>& refEEPoseRaw, const GaitParam& gaitParam, FootStepGenerator& footStepGenerator, std::vector<GaitParam::Collision>& envCollision, std::vector<GaitParam::Collision>& selfCollision){
+bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& ports, cnoid::BodyPtr refRobotRaw, cnoid::BodyPtr actRobotRaw, std::vector<cnoid::Vector6>& refEEWrenchOrigin, std::vector<cpp_filters::TwoPointInterpolatorSE3>& refEEPoseRaw, const GaitParam& gaitParam, FootStepGenerator& footStepGenerator, std::vector<GaitParam::Collision>& envCollision, std::vector<GaitParam::Collision>& selfCollision, std::vector<GaitParam::FootStepNodes>& footstepNodesList){
   bool qRef_updated = false;
   if(ports.m_qRefIn_.isNew()){
     ports.m_qRefIn_.read();
@@ -461,7 +463,7 @@ bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& por
     }
   }
 
-    if(ports.m_selfCollisionIn_.isNew()) {
+  if(ports.m_selfCollisionIn_.isNew()) {
     ports.m_selfCollisionIn_.read();
     selfCollision.resize(ports.m_selfCollision_.data.length());
     for (int i=0; i<selfCollision.size(); i++){
@@ -481,6 +483,25 @@ bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& por
       selfCollision[i].distance = ports.m_selfCollision_.data[i].distance;
     }
   }
+
+  if(ports.m_refFootStepNodesListIn_.isNew()) {
+    ports.m_refFootStepNodesListIn_.read();
+    // footstepを取り替えるときは静止時でなく、計画時以降着地をしていない
+    if ((!gaitParam.isStatic()) && (ports.m_refFootStepNodesList_.data.length() == footstepNodesList.size()) && (ports.m_refFootStepNodesList_.data[0].isSupportPhase[RLEG] == footstepNodesList[0].isSupportPhase[RLEG]) && (ports.m_refFootStepNodesList_.data[0].isSupportPhase[LLEG] == footstepNodesList[0].isSupportPhase[LLEG])) {
+      if(footstepNodesList[0].remainTime > footStepGenerator.overwritableMinTime){ // 着地直前は変更を行わない
+	for(int i=0;i<footstepNodesList.size();i++) {
+	  for(int j=0;j<NUM_LEGS;j++){
+	    footstepNodesList[i].dstCoords[j].translation()[0] = ports.m_refFootStepNodesList_.data[i].dstCoords[j].position.x;
+	    footstepNodesList[i].dstCoords[j].translation()[1] = ports.m_refFootStepNodesList_.data[i].dstCoords[j].position.y;
+	    footstepNodesList[i].dstCoords[j].translation()[2] = ports.m_refFootStepNodesList_.data[i].dstCoords[j].position.z;
+	    footstepNodesList[i].dstCoords[j].linear() = cnoid::rotFromRpy(ports.m_refFootStepNodesList_.data[i].dstCoords[j].orientation.r, ports.m_refFootStepNodesList_.data[i].dstCoords[j].orientation.p, ports.m_refFootStepNodesList_.data[i].dstCoords[j].orientation.y);
+	    footstepNodesList[i].isSupportPhase[j] = ports.m_refFootStepNodesList_.data[i].isSupportPhase[j];
+	  }
+	}
+      }
+    }
+  }
+  
   return qRef_updated;
 }
 
@@ -749,22 +770,23 @@ bool AutoStabilizer::writeOutPortData(AutoStabilizer::Ports& ports, const AutoSt
 
   // collision avoidance
   if(!gaitParam.isStatic()) {
-    ports.m_footStepNodesList_.tm = ports.m_qRef_.tm;
-    ports.m_footStepNodesList_.data.length(gaitParam.footstepNodesList.size());
+    ports.m_curFootStepNodesList_.tm = ports.m_qRef_.tm;
+    ports.m_curFootStepNodesList_.data.length(gaitParam.footstepNodesList.size());
+    std::cerr << gaitParam.footstepNodesList << std::endl;
     for(int i=0;i<gaitParam.footstepNodesList.size();i++){
-      ports.m_footStepNodesList_.data[i].dstCoords.length(NUM_LEGS);
-      ports.m_footStepNodesList_.data[i].isSupportPhase.length(NUM_LEGS);
+      ports.m_curFootStepNodesList_.data[i].dstCoords.length(NUM_LEGS);
+      ports.m_curFootStepNodesList_.data[i].isSupportPhase.length(NUM_LEGS);
       for(int j=0;j<NUM_LEGS;j++) {
-	ports.m_footStepNodesList_.data[i].dstCoords[j].position.x = gaitParam.footstepNodesList[i].dstCoords[j].translation()[0];
-	ports.m_footStepNodesList_.data[i].dstCoords[j].position.y = gaitParam.footstepNodesList[i].dstCoords[j].translation()[1];
-	ports.m_footStepNodesList_.data[i].dstCoords[j].position.x = gaitParam.footstepNodesList[i].dstCoords[j].translation()[2];
+	ports.m_curFootStepNodesList_.data[i].dstCoords[j].position.x = gaitParam.footstepNodesList[i].dstCoords[j].translation()[0];
+	ports.m_curFootStepNodesList_.data[i].dstCoords[j].position.y = gaitParam.footstepNodesList[i].dstCoords[j].translation()[1];
+	ports.m_curFootStepNodesList_.data[i].dstCoords[j].position.z = gaitParam.footstepNodesList[i].dstCoords[j].translation()[2];
 	cnoid::Vector3 rpy = cnoid::rpyFromRot(gaitParam.footstepNodesList[i].dstCoords[j].linear());
-	ports.m_footStepNodesList_.data[i].dstCoords[j].orientation.r = rpy[0];
-	ports.m_footStepNodesList_.data[i].dstCoords[j].orientation.p = rpy[1];
-	ports.m_footStepNodesList_.data[i].dstCoords[j].orientation.y = rpy[2];
-	ports.m_footStepNodesList_.data[i].isSupportPhase[j] = gaitParam.footstepNodesList[i].isSupportPhase[j];
+	ports.m_curFootStepNodesList_.data[i].dstCoords[j].orientation.r = rpy[0];
+	ports.m_curFootStepNodesList_.data[i].dstCoords[j].orientation.p = rpy[1];
+	ports.m_curFootStepNodesList_.data[i].dstCoords[j].orientation.y = rpy[2];
+	ports.m_curFootStepNodesList_.data[i].isSupportPhase[j] = gaitParam.footstepNodesList[i].isSupportPhase[j];
 	}
-      ports.m_footStepNodesList_.data[i].remainTime = gaitParam.footstepNodesList[i].remainTime;
+      ports.m_curFootStepNodesList_.data[i].remainTime = gaitParam.footstepNodesList[i].remainTime;
     }
     ports.m_footStepNodesListOut_.write();
   }
@@ -778,7 +800,7 @@ RTC::ReturnCode_t AutoStabilizer::onExecute(RTC::UniqueId ec_id){
   std::string instance_name = std::string(this->m_profile.instance_name);
   this->loop_++;
 
-  if(!AutoStabilizer::readInPortData(this->dt_, this->ports_, this->gaitParam_.refRobotRaw, this->gaitParam_.actRobotRaw, this->gaitParam_.refEEWrenchOrigin, this->gaitParam_.refEEPoseRaw, this->gaitParam_, this->footStepGenerator_, this->gaitParam_.envCollision, this->gaitParam_.selfCollision)) return RTC::RTC_OK;  // qRef が届かなければ何もしない
+  if(!AutoStabilizer::readInPortData(this->dt_, this->ports_, this->gaitParam_.refRobotRaw, this->gaitParam_.actRobotRaw, this->gaitParam_.refEEWrenchOrigin, this->gaitParam_.refEEPoseRaw, this->gaitParam_, this->footStepGenerator_, this->gaitParam_.envCollision, this->gaitParam_.selfCollision, this->gaitParam_.footstepNodesList)) return RTC::RTC_OK;  // qRef が届かなければ何もしない
 
   this->mode_.update(this->dt_);
   this->gaitParam_.update(this->dt_);

@@ -107,6 +107,8 @@ protected:
     RTC::InPort<collision_checker_msgs::TimedCollisionSeq> m_envCollisionIn_;
     collision_checker_msgs::TimedCollisionSeq m_selfCollision_;
     RTC::InPort<collision_checker_msgs::TimedCollisionSeq> m_selfCollisionIn_;
+    auto_stabilizer_msgs::TimedFootStepNodesList m_refFootStepNodesList_;
+    RTC::InPort<auto_stabilizer_msgs::TimedFootStepNodesList> m_refFootStepNodesListIn_;
     
     RTC::TimedDoubleSeq m_q_;
     RTC::OutPort<RTC::TimedDoubleSeq> m_qOut_;
@@ -118,7 +120,7 @@ protected:
     RTC::OutPort<RTC::TimedDoubleSeq> m_genBaseTformOut_; // for HrpsysSeqStateROSBridge
     auto_stabilizer_msgs::TimedLandingPosition m_landingTarget_;
     RTC::OutPort<auto_stabilizer_msgs::TimedLandingPosition> m_landingTargetOut_; // steppable_region合図
-    auto_stabilizer_msgs::TimedFootStepNodesList m_footStepNodesList_;
+    auto_stabilizer_msgs::TimedFootStepNodesList m_curFootStepNodesList_;
     RTC::OutPort<auto_stabilizer_msgs::TimedFootStepNodesList> m_footStepNodesListOut_;
 
     AutoStabilizerService_impl m_service0_;
@@ -252,7 +254,7 @@ protected:
   bool getProperty(const std::string& key, std::string& ret);
   static void copyEigenCoords2FootStep(const cnoid::Position& in_fs, OpenHRP::AutoStabilizerService::Footstep& out_fs);
 
-  static bool readInPortData(const double& dt, AutoStabilizer::Ports& ports, cnoid::BodyPtr refRobotRaw, cnoid::BodyPtr actRobotRaw, std::vector<cnoid::Vector6>& refEEWrenchOrigin, std::vector<cpp_filters::TwoPointInterpolatorSE3>& refEEPoseRaw, const GaitParam& gaitParam, FootStepGenerator& footStepGenerator, std::vector<GaitParam::Collision>& envCollision, std::vector<GaitParam::Collision>& selfCollision);
+  static bool readInPortData(const double& dt, AutoStabilizer::Ports& ports, cnoid::BodyPtr refRobotRaw, cnoid::BodyPtr actRobotRaw, std::vector<cnoid::Vector6>& refEEWrenchOrigin, std::vector<cpp_filters::TwoPointInterpolatorSE3>& refEEPoseRaw, const GaitParam& gaitParam, FootStepGenerator& footStepGenerator, std::vector<GaitParam::Collision>& envCollision, std::vector<GaitParam::Collision>& selfCollision, std::vector<GaitParam::FootStepNodes>& footstepNodesList);
   static bool execAutoStabilizer(const AutoStabilizer::ControlMode& mode, GaitParam& gaitParam, double dt, const FootStepGenerator& footStepGenerator, const LegCoordsGenerator& legCoordsGenerator, const RefToGenFrameConverter& refToGenFrameConverter, const ActToGenFrameConverter& actToGenFrameConverter, const ImpedanceController& impedanceController, const Stabilizer& stabilizer, const ExternalForceHandler& externalForceHandler, const FullbodyIKSolver& fullbodyIKSolver, const LegManualController& legManualController, const CmdVelGenerator& cmdVelGenerator);
   static bool writeOutPortData(AutoStabilizer::Ports& ports, const AutoStabilizer::ControlMode& mode, cpp_filters::TwoPointInterpolator<double>& idleToAbcTransitionInterpolator, double dt, const GaitParam& gaitParam);
 };
