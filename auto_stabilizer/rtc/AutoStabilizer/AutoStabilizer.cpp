@@ -41,6 +41,7 @@ AutoStabilizer::Ports::Ports() :
   m_genBaseTformOut_("genBaseTformOut", m_genBaseTform_),
   m_landingTargetOut_("landingTargetOut", m_landingTarget_),
   m_footStepNodesListOut_("footStepNodesListOut", m_curFootStepNodesList_),
+  m_comPredictParamOut_("comPredictParamOut", m_comPredictParam_),
   
   m_genBasePosOut_("genBasePosOut", m_genBasePos_),
   m_genBaseRpyOut_("genBaseRpyOut", m_genBaseRpy_),
@@ -83,6 +84,7 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
   this->addOutPort("genBaseTformOut", this->ports_.m_genBaseTformOut_);
   this->addOutPort("landingTargetOut", this->ports_.m_landingTargetOut_);
   this->addOutPort("footStepNodesListOut", this->ports_.m_footStepNodesListOut_);
+  this->addOutPort("comPredictParamOut", this->ports_.m_comPredictParamOut_);
   this->addOutPort("genBasePosOut", this->ports_.m_genBasePosOut_);
   this->addOutPort("genBaseRpyOut", this->ports_.m_genBaseRpyOut_);
   this->addOutPort("genCogOut", this->ports_.m_genCogOut_);
@@ -770,6 +772,7 @@ bool AutoStabilizer::writeOutPortData(AutoStabilizer::Ports& ports, const AutoSt
 
   // collision avoidance
   if(!gaitParam.isStatic()) {
+    // FootStepNodesList
     ports.m_curFootStepNodesList_.tm = ports.m_qRef_.tm;
     ports.m_curFootStepNodesList_.data.length(gaitParam.footstepNodesList.size());
     for(int i=0;i<gaitParam.footstepNodesList.size();i++){
@@ -788,7 +791,24 @@ bool AutoStabilizer::writeOutPortData(AutoStabilizer::Ports& ports, const AutoSt
       ports.m_curFootStepNodesList_.data[i].remainTime = gaitParam.footstepNodesList[i].remainTime;
     }
     ports.m_footStepNodesListOut_.write();
-  }
+
+    //ComPredictParam
+    ports.m_comPredictParam_.curZmp.x = gaitParam.refZmpTraj[0].getStart()[0];
+    ports.m_comPredictParam_.curZmp.y = gaitParam.refZmpTraj[0].getStart()[1];
+    ports.m_comPredictParam_.curZmp.z = gaitParam.refZmpTraj[0].getStart()[2];
+    ports.m_comPredictParam_.curCog.x = gaitParam.genCog[0];
+    ports.m_comPredictParam_.curCog.y = gaitParam.genCog[1];
+    ports.m_comPredictParam_.curCog.z = gaitParam.genCog[2];
+    ports.m_comPredictParam_.curCogVel.x = gaitParam.genCogVel[0];
+    ports.m_comPredictParam_.curCogVel.y = gaitParam.genCogVel[1];
+    ports.m_comPredictParam_.curCogVel.z = gaitParam.genCogVel[2];
+    ports.m_comPredictParam_.omega = gaitParam.omega;
+    ports.m_comPredictParam_.l.x = gaitParam.l[0];
+    ports.m_comPredictParam_.l.y = gaitParam.l[1];
+    ports.m_comPredictParam_.l.z = gaitParam.l[2];
+    ports.m_comPredictParam_.dt = dt;
+    ports.m_comPredictParamOut_.write();
+  }  
   
   return true;
 }

@@ -45,6 +45,16 @@ module auto_stabilizer_msgs
     RTC::Time tm;
     sequence<FootStepNodes> data;
   };
+
+  struct ComPredictParam
+  {
+    RTC::Point3D curZmp;
+    RTC::Point3D curCog;
+    RTC::Point3D curCogVel;
+    double omega;
+    RTC::Point3D l;
+    double dt;
+  };
 };
 
 #endif
