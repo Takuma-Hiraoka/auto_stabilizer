@@ -493,7 +493,7 @@ bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& por
 	  for(int j=0;j<NUM_LEGS;j++){
 	    footstepNodesList[i].dstCoords[j].translation()[0] = ports.m_refFootStepNodesList_.data[i].dstCoords[j].position.x;
 	    footstepNodesList[i].dstCoords[j].translation()[1] = ports.m_refFootStepNodesList_.data[i].dstCoords[j].position.y;
-	    footstepNodesList[i].dstCoords[j].translation()[2] = ports.m_refFootStepNodesList_.data[i].dstCoords[j].position.z;
+	    //footstepNodesList[i].dstCoords[j].translation()[2] = ports.m_refFootStepNodesList_.data[i].dstCoords[j].position.z; // z方向は正確でないので使用しない
 	    footstepNodesList[i].dstCoords[j].linear() = cnoid::rotFromRpy(ports.m_refFootStepNodesList_.data[i].dstCoords[j].orientation.r, ports.m_refFootStepNodesList_.data[i].dstCoords[j].orientation.p, ports.m_refFootStepNodesList_.data[i].dstCoords[j].orientation.y);
 	    footstepNodesList[i].isSupportPhase[j] = ports.m_refFootStepNodesList_.data[i].isSupportPhase[j];
 	  }
@@ -772,7 +772,6 @@ bool AutoStabilizer::writeOutPortData(AutoStabilizer::Ports& ports, const AutoSt
   if(!gaitParam.isStatic()) {
     ports.m_curFootStepNodesList_.tm = ports.m_qRef_.tm;
     ports.m_curFootStepNodesList_.data.length(gaitParam.footstepNodesList.size());
-    std::cerr << gaitParam.footstepNodesList << std::endl;
     for(int i=0;i<gaitParam.footstepNodesList.size();i++){
       ports.m_curFootStepNodesList_.data[i].dstCoords.length(NUM_LEGS);
       ports.m_curFootStepNodesList_.data[i].isSupportPhase.length(NUM_LEGS);
