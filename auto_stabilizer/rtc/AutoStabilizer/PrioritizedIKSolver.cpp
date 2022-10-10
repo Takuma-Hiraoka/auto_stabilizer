@@ -59,19 +59,17 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
     }
 
   // EEF
-  for(int i=0;i<gaitParam.eeName.size();i++){
+  for(int i=0;i<NUM_LEGS;i++){
     this->ikEEPositionConstraint[i]->A_link() = genRobot->link(gaitParam.eeParentLink[i]);
     this->ikEEPositionConstraint[i]->A_localpos() = gaitParam.eeLocalT[i];
     this->ikEEPositionConstraint[i]->B_link() = nullptr;
     this->ikEEPositionConstraint[i]->B_localpos() = gaitParam.abcEETargetPose[i];
     this->ikEEPositionConstraint[i]->maxError() << 10.0*dt, 10.0*dt, 10.0*dt, 10.0*dt, 10.0*dt, 10.0*dt;
     this->ikEEPositionConstraint[i]->precision() << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0; // 強制的にIKをmax loopまで回す
-    if(i<NUM_LEGS) this->ikEEPositionConstraint[i]->weight() << 10.0, 10.0, 10.0, 10.0, 10.0, 10.0;
-    else this->ikEEPositionConstraint[i]->weight() << 1.0, 1.0, 1.0, 1.0, 1.0, 1.0;
+    this->ikEEPositionConstraint[i]->weight() << 10.0, 10.0, 10.0, 10.0, 10.0, 10.0;
     this->ikEEPositionConstraint[i]->eval_link() = nullptr;
     this->ikEEPositionConstraint[i]->eval_localR() = this->ikEEPositionConstraint[i]->B_localpos().linear();
-    if(i<NUM_LEGS) ikConstraint1.push_back(this->ikEEPositionConstraint[i]);
-    else ikConstraint3.push_back(this->ikEEPositionConstraint[i]);
+    ikConstraint1.push_back(this->ikEEPositionConstraint[i]);
   }
 
   // COM
