@@ -18,7 +18,6 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
   std::vector<std::shared_ptr<IK::IKConstraint> > ikConstraint0;
   std::vector<std::shared_ptr<IK::IKConstraint> > ikConstraint1;
   std::vector<std::shared_ptr<IK::IKConstraint> > ikConstraint2;
-  std::vector<std::shared_ptr<IK::IKConstraint> > ikConstraint3;
 
   // collision
 
@@ -36,7 +35,7 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
     this->selfcollisionConstraint[i]->weight() = 1.0;
     this->selfcollisionConstraint[i]->velocityDamper() = 0.1 / dt;
     this->selfcollisionConstraint[i]->direction() = gaitParam.selfCollision[i].direction21;
-    ikConstraint0.push_back(this->selfcollisionConstraint[i]);
+    //ikConstraint0.push_back(this->selfcollisionConstraint[i]);
     }
 
   // envcollision
@@ -55,7 +54,7 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
     this->envcollisionConstraint[i]->weight() = 1.0;
     this->envcollisionConstraint[i]->velocityDamper() = 1.0 / dt;
     this->envcollisionConstraint[i]->direction() = gaitParam.envCollision[i].direction21;
-    ikConstraint0.push_back(this->envcollisionConstraint[i]);
+    //ikConstraint0.push_back(this->envcollisionConstraint[i]);
     }
 
   // EEF
@@ -94,7 +93,7 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
     this->angularMomentumConstraint->weight() << 1e-4, 1e-4, 0.0; // TODO
     this->angularMomentumConstraint->dt() = dt;
     this->comConstraint->eval_R() = cnoid::Matrix3::Identity();
-    ikConstraint3.push_back(this->angularMomentumConstraint);
+    ikConstraint2.push_back(this->angularMomentumConstraint);
   }
 
   // root
@@ -121,7 +120,7 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
       this->refJointAngleConstraint[i]->weight() = 1e-1; // 小さい値すぎると、qp終了判定のtoleranceによって無視されてしまう
       this->refJointAngleConstraint[i]->targetq() = gaitParam.refRobot->joint(i)->q();
       this->refJointAngleConstraint[i]->precision() = 0.0; // 強制的にIKをmax loopまで回す
-      ikConstraint3.push_back(this->refJointAngleConstraint[i]);
+      ikConstraint2.push_back(this->refJointAngleConstraint[i]);
     }
   }
 
@@ -170,7 +169,7 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
   for(size_t i=0;i<genRobot->numJoints();i++){
     variables.push_back(genRobot->joint(i));
   }
-  std::vector<std::vector<std::shared_ptr<IK::IKConstraint> > > constraints{ikConstraint0,ikConstraint1,ikConstraint2,ikConstraint3};
+  std::vector<std::vector<std::shared_ptr<IK::IKConstraint> > > constraints{ikConstraint0,ikConstraint1,ikConstraint2};
   for(size_t i=0;i<constraints.size();i++){
     for(size_t j=0;j<constraints[i].size();j++){
       constraints[i][j]->debuglevel() = 0;//debug
