@@ -29,13 +29,13 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
     this->selfcollisionConstraint[i]->A_localp() = gaitParam.selfCollision[i].point1.translation();
     this->selfcollisionConstraint[i]->B_link() = genRobot->link(gaitParam.selfCollision[i].link2);
     this->selfcollisionConstraint[i]->B_localp() = gaitParam.selfCollision[i].point2.translation();
-    this->selfcollisionConstraint[i]->tolerance() = 0.01; //TODO
+    this->selfcollisionConstraint[i]->tolerance() = 0.01;
     this->selfcollisionConstraint[i]->maxError() = 10.0*dt;
     this->selfcollisionConstraint[i]->precision() = 0.0; // 強制的にIKをmax loopまで回す
     this->selfcollisionConstraint[i]->weight() = 1.0;
     this->selfcollisionConstraint[i]->velocityDamper() = 0.1 / dt;
     this->selfcollisionConstraint[i]->direction() = gaitParam.selfCollision[i].direction21;
-    //ikConstraint0.push_back(this->selfcollisionConstraint[i]);
+    if(gaitParam.selfCollision[i].distance < 0.05) ikConstraint0.push_back(this->selfcollisionConstraint[i]);
     }
 
   // envcollision
@@ -48,13 +48,13 @@ bool FullbodyIKSolver::solveFullbodyIK(double dt, const GaitParam& gaitParam,
     this->envcollisionConstraint[i]->A_localp() = gaitParam.envCollision[i].point1.translation();
     this->envcollisionConstraint[i]->B_link() = nullptr;
     this->envcollisionConstraint[i]->B_localp() = gaitParam.envCollision[i].point2.translation();
-    this->envcollisionConstraint[i]->tolerance() = 0.04; //TODO
+    this->envcollisionConstraint[i]->tolerance() = 0.02;
     this->envcollisionConstraint[i]->maxError() = 10.0*dt;
     this->envcollisionConstraint[i]->precision() = 0.0; // 強制的にIKをmax loopまで回す
     this->envcollisionConstraint[i]->weight() = 1.0;
     this->envcollisionConstraint[i]->velocityDamper() = 1.0 / dt;
     this->envcollisionConstraint[i]->direction() = gaitParam.envCollision[i].direction21;
-    //ikConstraint0.push_back(this->envcollisionConstraint[i]);
+    if(gaitParam.envCollision[i].distance < 0.05) ikConstraint0.push_back(this->envcollisionConstraint[i]);
     }
 
   // EEF
