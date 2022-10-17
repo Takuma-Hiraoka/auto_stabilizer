@@ -431,13 +431,21 @@ bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& por
 	(gaitParam.footstepNodesList[0].isSupportPhase[LLEG] && (ports.m_steppableRegion_.data.l_r == 1))){ //現在支持脚と計算時支持脚が同じ
       footStepGenerator.steppable_region.resize(ports.m_steppableRegion_.data.region.length());
       footStepGenerator.steppable_height.resize(ports.m_steppableRegion_.data.region.length());
+        int swingLeg = footstepNodesList[0].isSupportPhase[RLEG] ? LLEG : RLEG;
+	int supportLeg = (swingLeg == RLEG) ? LLEG : RLEG;
+	cnoid::Position swingPose = gaitParam.genCoords[swingLeg].value();
+	cnoid::Position supportPose = gaitParam.genCoords[supportLeg].value(); // TODO. 支持脚のgenCoordsとdstCoordsが異なることは想定していない
+	cnoid::Position supportPoseHorizontal = mathutil::orientCoordToAxis(supportPose, cnoid::Vector3::UnitZ());
       for (int i=0; i<footStepGenerator.steppable_region.size(); i++){
 	footStepGenerator.steppable_region[i].resize(ports.m_steppableRegion_.data.region[i].length()/3);
 	double height_sum = 0.0;
 	for (int j=0; j<footStepGenerator.steppable_region[i].size(); j++){
-	  footStepGenerator.steppable_region[i][j](0) = ports.m_steppableRegion_.data.region[i][3*j];
-	  footStepGenerator.steppable_region[i][j](1) = ports.m_steppableRegion_.data.region[i][3*j+1];
-	  height_sum += ports.m_steppableRegion_.data.region[i][3*j+2];
+	  cnoid::Vector3 p;
+	  p[0] = ports.m_steppableRegion_.data.region[i][3*j];
+	  p[1] = ports.m_steppableRegion_.data.region[i][3*j+1];
+	  p[2] = ports.m_steppableRegion_.data.region[i][3*j+2];
+	  footStepGenerator.steppable_region[i][j] = supportPoseHorizontal * p;
+	  height_sum += footStepGenerator.steppable_region[i][j][2];
 	}
 	footStepGenerator.steppable_height[i] = height_sum / footStepGenerator.steppable_region[i].size();
       }
