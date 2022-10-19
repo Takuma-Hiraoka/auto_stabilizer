@@ -14,6 +14,11 @@ public:
 
   int previewStepNum = 4; // 2以上. ZMPと重心軌道を生成する際に予見するfootStepNodesListのサイズ. 着地位置修正アルゴリズムが1 step capturabilityに基づくものであるため、previewStepNum = 2にして今の一歩だけを予見して重心軌道を生成した方がいいように思えるが、実際には4以上でないと目標軌道に追従するために必要なZmp入力が大きく、refZmpTrajの値を大きく外れてしまう.
   double footGuidedBalanceTime = 0.6; // [s]. refZmpTrajの終端時間. 0より大きい. (1.0[s]だと大きすぎて, 両足で立っているときに傾いたままなかなか戻ってこなかったり、停止時に重心がなかなか中央に戻らずemergency stepが無限誘発したり、少しずつ傾いていくことがある). (0.4だと静止時に衝撃が加わると上下方向に左右交互に振動することがある)
+
+  double contactDetectionThreshold = 25.0; // [N]. generate frameで遊脚が着地時に鉛直方向にこの大きさ以上の力を受けたら接地とみなして、EarlyTouchDown処理を行う. 実機では25N程度がよい?
+protected:
+  mutable std::vector<cpp_filters::FirstOrderLowPassFilter<cnoid::Vector6> > actLegWrenchFilter = std::vector<cpp_filters::FirstOrderLowPassFilter<cnoid::Vector6> >(2, cpp_filters::FirstOrderLowPassFilter<cnoid::Vector6>(50.0, cnoid::Vector6::Zero()));  // 要素数2. rleg: 0. lleg: 1. generate frame. endeffector origin. cutoff 50hz. contactDecisionThresholdを用いた接触判定に用いる
+  
 public:
   void initLegCoords(const GaitParam& gaitParam,
                      std::vector<footguidedcontroller::LinearTrajectory<cnoid::Vector3> >& o_refZmpTraj, std::vector<cpp_filters::TwoPointInterpolatorSE3>& o_genCoords) const;
@@ -23,6 +28,12 @@ public:
 
   void calcCOMCoords(const GaitParam& gaitParam, double dt,
                      cnoid::Vector3& o_genNextCog, cnoid::Vector3& o_genNextCogVel) const;
+  // startAutoBalancer時に呼ばれる
+  void reset(){
+    for(int i=0;i<NUM_LEGS;i++){
+      actLegWrenchFilter[i].reset(cnoid::Vector6::Zero());
+    }
+  }
 
 };
 

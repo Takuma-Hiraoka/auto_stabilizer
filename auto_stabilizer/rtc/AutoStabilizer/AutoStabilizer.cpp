@@ -841,6 +841,7 @@ RTC::ReturnCode_t AutoStabilizer::onExecute(RTC::UniqueId ec_id){
       this->externalForceHandler_.reset();
       this->footStepGenerator_.reset();
       this->impedanceController_.reset();
+      this->legCoordsGenerator_.reset();
     }
     AutoStabilizer::execAutoStabilizer(this->mode_, this->gaitParam_, this->dt_, this->footStepGenerator_, this->legCoordsGenerator_, this->refToGenFrameConverter_, this->actToGenFrameConverter_, this->impedanceController_, this->stabilizer_,this->externalForceHandler_, this->fullbodyIKSolver_, this->legManualController_, this->cmdVelGenerator_);
   }
@@ -1259,7 +1260,6 @@ bool AutoStabilizer::setAutoStabilizerParam(const OpenHRP::AutoStabilizerService
       }
     }
   }
-  this->footStepGenerator_.contactDetectionThreshold = i_param.contact_detection_threshold;
   this->footStepGenerator_.isEmergencyStepMode = i_param.is_emergency_step_mode;
   this->footStepGenerator_.isStableGoStopMode = i_param.is_stable_go_stop_mode;
   this->footStepGenerator_.emergencyStepNum = std::max(i_param.emergency_step_num, 1);
@@ -1268,6 +1268,7 @@ bool AutoStabilizer::setAutoStabilizerParam(const OpenHRP::AutoStabilizerService
   this->legCoordsGenerator_.delayTimeOffset = std::max(i_param.swing_trajectory_delay_time_offset, 0.0);
   this->legCoordsGenerator_.touchVel = std::max(i_param.swing_trajectory_touch_vel, 0.001);
   this->legCoordsGenerator_.finalDistanceWeight = std::max(i_param.swing_trajectory_final_distance_weight, 0.01);
+  this->legCoordsGenerator_.contactDetectionThreshold = i_param.contact_detection_threshold;
   if(!this->mode_.isABCRunning() || this->gaitParam_.isStatic()) this->legCoordsGenerator_.goalOffset = std::min(i_param.goal_offset, 0.0);
   this->legCoordsGenerator_.previewStepNum = std::max(i_param.preview_step_num, 2);
   this->legCoordsGenerator_.footGuidedBalanceTime = std::max(i_param.footguided_balance_time, 0.01);
@@ -1444,12 +1445,12 @@ bool AutoStabilizer::getAutoStabilizerParam(OpenHRP::AutoStabilizerService::Auto
       for(int k=0;k<2;k++) i_param.overwritable_stride_limitation[i][j][k] = this->footStepGenerator_.overwritableStrideLimitationHull[i][j][k];
     }
   }
-  i_param.contact_detection_threshold = this->footStepGenerator_.contactDetectionThreshold;
   i_param.is_emergency_step_mode = this->footStepGenerator_.isEmergencyStepMode;
   i_param.is_stable_go_stop_mode = this->footStepGenerator_.isStableGoStopMode;
   i_param.emergency_step_num = this->footStepGenerator_.emergencyStepNum;
   i_param.emergency_step_cp_check_margin = this->footStepGenerator_.emergencyStepCpCheckMargin;
 
+  i_param.contact_detection_threshold = this->legCoordsGenerator_.contactDetectionThreshold;
   i_param.swing_trajectory_delay_time_offset = this->legCoordsGenerator_.delayTimeOffset;
   i_param.swing_trajectory_touch_vel = this->legCoordsGenerator_.touchVel;
   i_param.swing_trajectory_final_distance_weight = this->legCoordsGenerator_.finalDistanceWeight;

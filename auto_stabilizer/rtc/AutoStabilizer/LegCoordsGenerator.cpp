@@ -98,6 +98,9 @@ void LegCoordsGenerator::calcLegCoords(const GaitParam& gaitParam, double dt, bo
   std::vector<cpp_filters::TwoPointInterpolatorSE3> genCoords = gaitParam.genCoords;
   std::vector<GaitParam::SwingState_enum> swingState = gaitParam.swingState;
   for(int i=0;i<NUM_LEGS;i++){
+    actLegWrenchFilter[i].passFilter(gaitParam.actEEWrench[i], dt);
+  }
+  for(int i=0;i<NUM_LEGS;i++){
     if(gaitParam.footstepNodesList[0].isSupportPhase[i]) { // 支持脚
       cnoid::Position nextCoords = mathutil::calcMidCoords(std::vector<cnoid::Position>{genCoords[i].value(),gaitParam.footstepNodesList[0].dstCoords[i]},
                                                            std::vector<double>{std::max(0.0,gaitParam.footstepNodesList[0].remainTime - dt), dt}); // このfootstepNode終了時にdstCoordsに行くように線形補間
@@ -125,8 +128,11 @@ void LegCoordsGenerator::calcLegCoords(const GaitParam& gaitParam, double dt, bo
         else if(antecedentCoords.translation()[2] < dstCoords.translation()[2]) swingState[i] = GaitParam::LIFT_PHASE;
         else if((antecedentCoords.translation() - dstCoordsWithOffset.translation()).head<2>().norm() <= 1e-3 &&
                 swingTime - this->delayTimeOffset <= touchDownTime) swingState[i] = GaitParam::DOWN_PHASE;
+      }else if(swingState[i] == GaitParam::DOWN_PHASE){
+	if(actLegWrenchFilter[i].value()[2] > this->contactDetectionThreshold) swingState[i] = GaitParam::WAIT_PHASE; // そのLegがDOWN_PHASEかつ力センサの値が閾値以上になった場合に、足の振り下ろしを止め、残りの時間はその場所で待機する．すぐに次のnodeに移るとゆっくり重心移動しようとしていた時間ぶん速く重心を移動させようとし、急激なzmpの変化に繋がってギア飛びする． 
+        // 一度DOWN_PHASEになったら前のPHASEに戻ることはない
       }else{
-        // 一度DOWN_PHASEになったら別のPHASEになることはない
+	// 一度WAIT_PHASEになったら前のPHASEに戻ることはない
       }
 
       if(swingState[i] == GaitParam::LIFT_PHASE){
@@ -171,7 +177,7 @@ void LegCoordsGenerator::calcLegCoords(const GaitParam& gaitParam, double dt, bo
                                                    std::vector<double>{std::max(0.0,swingTime - this->delayTimeOffset - goalOffsetTime - dt), dt}); // もとのdstCoordsの高さについたときにdstCoordsの傾きになるように線形補間
         genCoords[i].setGoal(nextCoords, this->delayTimeOffset);
         genCoords[i].interpolate(dt);
-      }else{ // DOWN_PHASE
+      }else if(swingState[i] == GaitParam::DOWN_PHASE){
         if(swingTime <= this->delayTimeOffset){
           genCoords[i].setGoal(dstCoordsWithOffset, swingTime);
           genCoords[i].interpolate(dt);
@@ -185,6 +191,11 @@ void LegCoordsGenerator::calcLegCoords(const GaitParam& gaitParam, double dt, bo
           genCoords[i].setGoal(nextCoords, this->delayTimeOffset);
           genCoords[i].interpolate(dt);
         }
+      }else{ // WAIT_PHASE
+	// このfootstepNode終了時にdstCoordsに行くように線形補間
+	cnoid::Position nextCoords = mathutil::calcMidCoords(std::vector<cnoid::Position>{genCoords[i].value(),gaitParam.footstepNodesList[0].dstCoords[i]},
+							     std::vector<double>{std::max(0.0,gaitParam.footstepNodesList[0].remainTime - dt), dt});
+	genCoords[i].reset(nextCoords);
       }
     }
   }

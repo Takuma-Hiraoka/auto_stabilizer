@@ -195,7 +195,7 @@ bool FootStepGenerator::procFootStepNodesList(const GaitParam& gaitParam, const 
   std::vector<GaitParam::SwingState_enum> swingState = gaitParam.swingState;
 
   if(useActState){
-    // 早づきしたらremainTimeにかかわらずすぐに次のnodeへ移る(remainTimeをdtにする). この機能が無いと少しでもロボットが傾いて早づきするとジャンプするような挙動になる.
+    // 早づきしたらその足の振り下ろしを止め、残りの時間はその場所で待機する．すぐに次のnodeに移るとゆっくり重心移動しようとしていた時間ぶん速く重心を移動させようとし、急激なzmpの変化に繋がってギア飛びする． この機能が無いと少しでもロボットが傾いて早づきするとジャンプするような挙動になる. 遅づきに備えるために、着地位置を下方にオフセットさせる
     this->checkEarlyTouchDown(footstepNodesList, gaitParam, dt);
   }
 
@@ -718,24 +718,18 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
   footstepNodesList[0].remainTime = candidates[0].second;
 }
 
-// 早づきしたらremainTimeをdtに減らしてすぐに次のnodeへ移る. この機能が無いと少しでもロボットが傾いて早づきするとジャンプするような挙動になる. 遅づきに備えるために、着地位置を下方にオフセットさせる
+// 早づきしたらその足の振り下ろしを止め、残りの時間はその場所で待機する．すぐに次のnodeに移るとゆっくり重心移動しようとしていた時間ぶん速く重心を移動させようとし、急激なzmpの変化に繋がってギア飛びする． この機能が無いと少しでもロボットが傾いて早づきするとジャンプするような挙動になる. 遅づきに備えるために、着地位置を下方にオフセットさせる
 void FootStepGenerator::checkEarlyTouchDown(std::vector<GaitParam::FootStepNodes>& footstepNodesList, const GaitParam& gaitParam, double dt) const{
-  for(int i=0;i<NUM_LEGS;i++){
-    actLegWrenchFilter[i].passFilter(gaitParam.actEEWrench[i], dt);
+  // 早づきした瞬間に遊脚の目標位置を現在の遊脚の位置に変える．
+  static double prev_swingstate = GaitParam::LIFT_PHASE;
+  int swingLeg = footstepNodesList[0].isSupportPhase[RLEG] ? LLEG : RLEG;
+  if((gaitParam.swingState[swingLeg] == GaitParam::WAIT_PHASE) && (prev_swingstate == GaitParam::DOWN_PHASE)){
+    int swingLeg = footstepNodesList[0].isSupportPhase[RLEG] ? LLEG : RLEG;
+    cnoid::Position swingPose = gaitParam.genCoords[swingLeg].value();
+    cnoid::Position displacement = swingPose * footstepNodesList[0].dstCoords[swingLeg].inverse();
+    this->transformFutureSteps(footstepNodesList, 0, displacement);
   }
-
-  // 現在swing期で次support期のLegがあって、
-  // そのLegがDOWN_PHASEかつ力センサの値が閾値以上になった場合に、すぐに次のnodeに移る
-  if(footstepNodesList.size() > 1 &&
-     ((!footstepNodesList[0].isSupportPhase[RLEG] && footstepNodesList[1].isSupportPhase[RLEG] && //現在swing期で次support期
-       gaitParam.swingState[RLEG] == GaitParam::DOWN_PHASE && // DOWN_PHASE
-       actLegWrenchFilter[RLEG].value()[2] > this->contactDetectionThreshold /*generate frame. ロボットが受ける力*/) // 力センサの値が閾値以上
-      ||
-      (!footstepNodesList[0].isSupportPhase[LLEG] && footstepNodesList[1].isSupportPhase[LLEG] && //現在swing期で次support期
-       gaitParam.swingState[LLEG] == GaitParam::DOWN_PHASE && // DOWN_PHASE
-       actLegWrenchFilter[LLEG].value()[2] > this->contactDetectionThreshold /*generate frame. ロボットが受ける力*/))){ // 力センサの値が閾値以上
-    footstepNodesList[0].remainTime = dt;
-  }
+  prev_swingstate = gaitParam.swingState[swingLeg];
 }
 
 // emergengy step.
