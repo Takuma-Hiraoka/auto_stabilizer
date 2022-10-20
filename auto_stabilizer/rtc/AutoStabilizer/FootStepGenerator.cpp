@@ -711,7 +711,8 @@ void FootStepGenerator::checkEarlyTouchDown(std::vector<GaitParam::FootStepNodes
   if((gaitParam.swingState[swingLeg] == GaitParam::WAIT_PHASE) && (prev_swingstate == GaitParam::DOWN_PHASE)){
     int swingLeg = footstepNodesList[0].isSupportPhase[RLEG] ? LLEG : RLEG;
     cnoid::Position swingPose = gaitParam.genCoords[swingLeg].value();
-    cnoid::Position displacement = swingPose * footstepNodesList[0].dstCoords[swingLeg].inverse();
+    cnoid::Position swingPoseHorizontal = mathutil::orientCoordToAxis(swingPose, cnoid::Vector3::UnitZ());
+    cnoid::Position displacement = swingPoseHorizontal * footstepNodesList[0].dstCoords[swingLeg].inverse();
     this->transformFutureSteps(footstepNodesList, 0, displacement);
   }
   prev_swingstate = gaitParam.swingState[swingLeg];
