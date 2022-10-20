@@ -537,19 +537,10 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
   // 2. steppable: 達成不可の場合は、考慮しない．起動時からregionが来るまではsteppable判定は行われない．
   // stepable_regionが来ない場合、前のregionを使う．
   {
-    std::vector<std::vector<cnoid::Vector3> > steppableHulls; // generate frame.
-    for(int i=0;i<this->steppable_region.size();i++){
-      std::vector<cnoid::Vector3> steppableHull;
-      for(int j=0;j<this->steppable_region[i].size();j++){
-	//cnoid::Vector3 p = supportPoseHorizontal * cnoid::Vector3(this->steppable_region[i][j](0), this->steppable_region[i][j](1),0);
-	steppableHull.emplace_back(steppable_region[i][j]);
-      }
-      steppableHulls.emplace_back(steppableHull);
-    }
     std::vector<std::pair<std::vector<cnoid::Vector3>, double> > nextCandidates;
     for(int i=0;i<candidates.size();i++){
-      for(int j=0;j<steppableHulls.size();j++){
-	std::vector<cnoid::Vector3> hull = mathutil::calcIntersectConvexHull(candidates[i].first, steppableHulls[j]);
+      for(int j=0;j<this->steppable_region.size();j++){
+	std::vector<cnoid::Vector3> hull = mathutil::calcIntersectConvexHull(candidates[i].first, this->steppable_region[j]);
 	if(hull.size() > 0) nextCandidates.emplace_back(hull, candidates[i].second);
       }
     }
@@ -693,16 +684,10 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
   double supportHeight = 0.0;
   double dstHeight = 0.0;
   for(int i=0;i<this->steppable_region.size();i++){
-      std::vector<cnoid::Vector3> steppableHull;
-      for(int j=0;j<this->steppable_region[i].size();j++){
-	//cnoid::Vector3 p = supportPoseHorizontal * cnoid::Vector3(this->steppable_region[i][j](0), this->steppable_region[i][j](1),0);
-	//steppableHull.emplace_back(p);
-	steppableHull.emplace_back(steppable_region[i][j]);
-      }
-      if(mathutil::isInsideHull(nextDstCoordsPos,steppableHull)){
+      if(mathutil::isInsideHull(nextDstCoordsPos,this->steppable_region[i])){
 	dstHeight = this->steppable_height[i];
       }
-      if(mathutil::isInsideHull(supportPoseHorizontal.translation(),steppableHull)){
+      if(mathutil::isInsideHull(supportPoseHorizontal.translation(),this->steppable_region[i])){
 	supportHeight = this->steppable_height[i];
       }
   }

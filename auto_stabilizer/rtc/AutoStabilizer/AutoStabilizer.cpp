@@ -431,11 +431,11 @@ bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& por
 	(gaitParam.footstepNodesList[0].isSupportPhase[LLEG] && (ports.m_steppableRegion_.data.l_r == 1))){ //現在支持脚と計算時支持脚が同じ
       footStepGenerator.steppable_region.resize(ports.m_steppableRegion_.data.region.length());
       footStepGenerator.steppable_height.resize(ports.m_steppableRegion_.data.region.length());
-        int swingLeg = footstepNodesList[0].isSupportPhase[RLEG] ? LLEG : RLEG;
-	int supportLeg = (swingLeg == RLEG) ? LLEG : RLEG;
-	cnoid::Position swingPose = gaitParam.genCoords[swingLeg].value();
-	cnoid::Position supportPose = gaitParam.genCoords[supportLeg].value(); // TODO. 支持脚のgenCoordsとdstCoordsが異なることは想定していない
-	cnoid::Position supportPoseHorizontal = mathutil::orientCoordToAxis(supportPose, cnoid::Vector3::UnitZ());
+      int swingLeg = footstepNodesList[0].isSupportPhase[RLEG] ? LLEG : RLEG;
+      int supportLeg = (swingLeg == RLEG) ? LLEG : RLEG;
+      cnoid::Position swingPose = gaitParam.genCoords[swingLeg].value();
+      cnoid::Position supportPose = gaitParam.genCoords[supportLeg].value(); // TODO. 支持脚のgenCoordsとdstCoordsが異なることは想定していない
+      cnoid::Position supportPoseHorizontal = mathutil::orientCoordToAxis(supportPose, cnoid::Vector3::UnitZ());
       for (int i=0; i<footStepGenerator.steppable_region.size(); i++){
 	footStepGenerator.steppable_region[i].resize(ports.m_steppableRegion_.data.region[i].length()/3);
 	double height_sum = 0.0;
@@ -816,8 +816,8 @@ bool AutoStabilizer::writeOutPortData(AutoStabilizer::Ports& ports, const AutoSt
     ports.m_comPredictParam_.l.z = gaitParam.l[2];
     ports.m_comPredictParam_.dt = dt;
     ports.m_comPredictParamOut_.write();
-  }  
-  
+  }
+
   return true;
 }
 
