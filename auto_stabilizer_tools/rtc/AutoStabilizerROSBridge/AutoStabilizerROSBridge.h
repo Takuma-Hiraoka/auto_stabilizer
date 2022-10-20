@@ -21,14 +21,18 @@ protected:
   ros::Publisher landing_target_pub_;
 
   ros::Subscriber steppable_region_sub_;
+  ros::Subscriber landing_pose_sub_;
   auto_stabilizer_msgs::TimedSteppableRegion m_steppableRegion_;
   RTC::OutPort <auto_stabilizer_msgs::TimedSteppableRegion> m_steppableRegionOut_;
+  auto_stabilizer_msgs::TimedLandingPosition m_landingPose_;
+  RTC::OutPort <auto_stabilizer_msgs::TimedLandingPosition> m_landingPoseOut_;
 public:
   AutoStabilizerROSBridge(RTC::Manager* manager);
   virtual RTC::ReturnCode_t onInitialize();
   virtual RTC::ReturnCode_t onExecute(RTC::UniqueId ec_id);
 
   void onSteppableRegionCB(const auto_stabilizer_msgs::SteppableRegion::ConstPtr& msg);
+  void onLandingPoseCB(const auto_stabilizer_msgs::LandingPosition::ConstPtr& msg);
   
 };
 

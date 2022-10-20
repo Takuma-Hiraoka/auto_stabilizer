@@ -29,10 +29,10 @@ public:
   // FootStepGeneratorでしか使わないパラメータ. startAutoBalancer時に初期化が必要
   bool isGoVelocityMode = false; // 進行方向に向けてfootStepNodesList[1] ~ footStepNodesList[goVelocityStepNum]の要素をfootstepNodesList[0]から機械的に計算してどんどん位置修正&末尾appendしていく.
 
-  std::vector<std::vector<cnoid::Vector3> > steppable_region; // 要素数任意. generate frame. endCoordsが存在できる領域 TODO
+  std::vector<std::vector<cnoid::Vector3> > steppable_region; // 要素数任意. generate frame. endCoordsが存在できる領域
   std::vector<double> steppable_height; // 要素数はsteppable_regionと同じ. generate frame. 各polygonごとのおおよその値. そのpolygonに届くかどうかの判定と、 TODO
-  double relLandingHeight; // generate frame. 現在の遊脚のfootstepNodesList[0]のdstCoordsのZ TODO
-  cnoid::Vector3 relLandingNormal; // generate frame. 現在の遊脚のfootstepNodesList[0]のdstCoordsのZ軸の方向 TODO
+  cnoid::Vector3 relLandingPos = cnoid::Vector3::Zero(); // generate frame. relLandingNormal計算時の遊脚のfootstepNodesList[0]のdstCoordsのtranslation
+  cnoid::Vector3 relLandingNormal = cnoid::Vector3::UnitZ(); // generate frame. 現在の遊脚のfootstepNodesList[0]のdstCoordsのZ軸の方向
 
 public:
   // startAutoBalancer時に呼ばれる

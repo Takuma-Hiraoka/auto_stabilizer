@@ -474,6 +474,10 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
   cnoid::Position supportPose = gaitParam.genCoords[supportLeg].value(); // TODO. 支持脚のgenCoordsとdstCoordsが異なることは想定していない
   cnoid::Position supportPoseHorizontal = mathutil::orientCoordToAxis(supportPose, cnoid::Vector3::UnitZ());
 
+  // WAIT_PHASEではすでに着地しているので着地位置修正は行わない．
+  if(gaitParam.swingState[swingLeg] == GaitParam::WAIT_PHASE) return;
+
+
   // dx = w ( x - z - l)
   cnoid::Vector3 actDCM = gaitParam.actCog + gaitParam.actCogVel.value() / gaitParam.omega;
 
@@ -701,6 +705,11 @@ void FootStepGenerator::modifyFootSteps(std::vector<GaitParam::FootStepNodes>& f
   if(nextDstCoordsPos[2] == 0) displacement[2] = 0.0; //steppable region外の場合．一時的にsteppable region外になることがあり、そのときに前回の足上げ高さを引いてしまう．
   this->transformFutureSteps(footstepNodesList, 0, displacement);
   footstepNodesList[0].remainTime = candidates[0].second;
+
+  // 修正された着地位置をlandingTargetとして送っている．steppable_region_publisherがそれをもとに着地姿勢を返してくるので、計算時と現在の目標着地位置が十分近いなら、着地姿勢を修正する
+  if((footstepNodesList[0].dstCoords[swingLeg].translation() - this->relLandingPos).norm() <= 0.1) {
+    footstepNodesList[0].dstCoords[swingLeg].linear() = mathutil::orientCoordToAxis(footstepNodesList[0].dstCoords[swingLeg].linear(), this->relLandingNormal);
+  }
 }
 
 // 早づきしたらその足の振り下ろしを止め、残りの時間はその場所で待機する．すぐに次のnodeに移るとゆっくり重心移動しようとしていた時間ぶん速く重心を移動させようとし、急激なzmpの変化に繋がってギア飛びする． この機能が無いと少しでもロボットが傾いて早づきするとジャンプするような挙動になる. 遅づきに備えるために、着地位置を下方にオフセットさせる

@@ -3,17 +3,20 @@
 AutoStabilizerROSBridge::AutoStabilizerROSBridge(RTC::Manager* manager):
   RTC::DataFlowComponentBase(manager),
   m_steppableRegionOut_("steppableRegionOut", m_steppableRegion_),
+  m_landingPoseOut_("landingPoseOut", m_landingPose_),
   m_landingTargetIn_("landingTargetIn", m_landingTarget_)
 {
 }
 
 RTC::ReturnCode_t AutoStabilizerROSBridge::onInitialize(){
   addOutPort("steppableRegionOut", m_steppableRegionOut_);
+  addOutPort("landingPoseIn", m_landingPoseOut_);
   addInPort("landingTargetIn", m_landingTargetIn_);
 
   ros::NodeHandle pnh("~");
 
   steppable_region_sub_ = pnh.subscribe("/steppable_region", 1, &AutoStabilizerROSBridge::onSteppableRegionCB, this);
+  landing_pose_sub_ = pnh.subscribe("/landing_height", 1, &AutoStabilizerROSBridge::onLandingPoseCB, this);
   landing_target_pub_ = pnh.advertise<auto_stabilizer_msgs::LandingPosition>("/landing_target", 1);
 
   return RTC::RTC_OK;
@@ -55,6 +58,18 @@ void AutoStabilizerROSBridge::onSteppableRegionCB(const auto_stabilizer_msgs::St
   }
   m_steppableRegion_.data.l_r = msg->l_r;
   m_steppableRegionOut_.write();
+}
+
+void AutoStabilizerROSBridge::onLandingPoseCB(const auto_stabilizer_msgs::LandingPosition::ConstPtr& msg) {
+  m_landingPose_.data.x = msg->x;
+  m_landingPose_.data.y = msg->y;
+  m_landingPose_.data.z = msg->z;
+  m_landingPose_.data.nx = msg->nx;
+  m_landingPose_.data.ny = msg->ny;
+  m_landingPose_.data.nz = msg->nz;
+  m_landingPose_.data.l_r = msg->l_r;
+  m_landingPoseOut_.write();
+  
 }
 
 static const char* AutoStabilizerROSBridge_spec[] = {

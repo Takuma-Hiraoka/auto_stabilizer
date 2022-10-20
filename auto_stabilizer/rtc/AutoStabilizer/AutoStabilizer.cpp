@@ -34,6 +34,7 @@ AutoStabilizer::Ports::Ports() :
   m_envCollisionIn_("envCollisionIn", m_envCollision_),
   m_selfCollisionIn_("selfCollisionIn", m_selfCollision_),
   m_refFootStepNodesListIn_("refFootStepNodesListIn", m_refFootStepNodesList_),
+  m_landingPoseIn_("landingPoseIn", m_landingPose_),
   
   m_qOut_("q", m_q_),
   m_genTauOut_("genTauOut", m_genTau_),
@@ -78,6 +79,7 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
   this->addInPort("envCollisionIn", this->ports_.m_envCollisionIn_);
   this->addInPort("selfCollisionIn", this->ports_.m_selfCollisionIn_);
   this->addInPort("refFootStepNodesListIn", this->ports_.m_refFootStepNodesListIn_);
+  this->addInPort("landingPoseIn", this->ports_.m_landingPoseIn_);
   this->addOutPort("q", this->ports_.m_qOut_);
   this->addOutPort("genTauOut", this->ports_.m_genTauOut_);
   this->addOutPort("genBasePoseOut", this->ports_.m_genBasePoseOut_);
@@ -452,6 +454,26 @@ bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& por
     }
   }
 
+  if(ports.m_landingPoseIn_.isNew()) {
+    ports.m_landingPoseIn_.read();
+    int swingLeg = footstepNodesList[0].isSupportPhase[RLEG] ? LLEG : RLEG;
+    int supportLeg = (swingLeg == RLEG) ? LLEG : RLEG;
+    cnoid::Position supportPose = gaitParam.genCoords[supportLeg].value(); // TODO. 支持脚のgenCoordsとdstCoordsが異なることは想定していない
+    cnoid::Position supportPoseHorizontal = mathutil::orientCoordToAxis(supportPose, cnoid::Vector3::UnitZ());
+    if(ports.m_landingPose_.data.l_r == supportLeg){
+      cnoid::Vector3 dstPosFromSupport;
+      dstPosFromSupport[0] = ports.m_landingPose_.data.x;
+      dstPosFromSupport[1] = ports.m_landingPose_.data.y;
+      dstPosFromSupport[2] = ports.m_landingPose_.data.z;
+      cnoid::Vector3 dstNormalFromSupport;
+      dstNormalFromSupport[0] = ports.m_landingPose_.data.nx;
+      dstNormalFromSupport[1] = ports.m_landingPose_.data.ny;
+      dstNormalFromSupport[2] = ports.m_landingPose_.data.nz;
+      footStepGenerator.relLandingPos = supportPoseHorizontal * dstPosFromSupport;
+      footStepGenerator.relLandingNormal = supportPoseHorizontal.linear() * dstNormalFromSupport;
+    }
+  }
+
   if(ports.m_envCollisionIn_.isNew()) {
     ports.m_envCollisionIn_.read();
     envCollision.resize(ports.m_envCollision_.data.length());
@@ -770,11 +792,16 @@ bool AutoStabilizer::writeOutPortData(AutoStabilizer::Ports& ports, const AutoSt
 
   //steppable region
   if(!gaitParam.isStatic()) {
+    int swingLeg = gaitParam.footstepNodesList[0].isSupportPhase[RLEG] ? LLEG : RLEG;
+    int supportLeg = (swingLeg == RLEG) ? LLEG : RLEG;
+    cnoid::Position swingPose = gaitParam.genCoords[swingLeg].value();
+    cnoid::Position supportPose = gaitParam.genCoords[supportLeg].value();
+    cnoid::Position dstCoordsFromSupport = supportPose.inverse() * swingPose;
     ports.m_landingTarget_.tm = ports.m_qRef_.tm;
-    ports.m_landingTarget_.data.x = 0;
-    ports.m_landingTarget_.data.y = 0;
-    ports.m_landingTarget_.data.z = 0;
-    ports.m_landingTarget_.data.l_r = gaitParam.footstepNodesList[0].isSupportPhase[RLEG] ? 0 : 1; // 歩き始めて片足支持期になってから着地位置修正を行うので、両足支持期を考慮する必要がないとしている。
+    ports.m_landingTarget_.data.x = dstCoordsFromSupport.translation()[0];
+    ports.m_landingTarget_.data.y = dstCoordsFromSupport.translation()[1];
+    ports.m_landingTarget_.data.z = dstCoordsFromSupport.translation()[2];
+    ports.m_landingTarget_.data.l_r = supportLeg;// 歩き始めて片足支持期になってから着地位置修正を行うので、両足支持期を考慮する必要がないとしている。
     ports.m_landingTargetOut_.write(); 
   }
 

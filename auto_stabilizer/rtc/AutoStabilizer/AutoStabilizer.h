@@ -109,6 +109,8 @@ protected:
     RTC::InPort<collision_checker_msgs::TimedCollisionSeq> m_selfCollisionIn_;
     auto_stabilizer_msgs::TimedFootStepNodesList m_refFootStepNodesList_;
     RTC::InPort<auto_stabilizer_msgs::TimedFootStepNodesList> m_refFootStepNodesListIn_;
+    auto_stabilizer_msgs::TimedLandingPosition m_landingPose_;
+    RTC::InPort<auto_stabilizer_msgs::TimedLandingPosition> m_landingPoseIn_; // 着地する予定のregionの傾き
     
     RTC::TimedDoubleSeq m_q_;
     RTC::OutPort<RTC::TimedDoubleSeq> m_qOut_;
