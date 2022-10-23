@@ -40,6 +40,7 @@ AutoStabilizer::Ports::Ports() :
   m_genTauOut_("genTauOut", m_genTau_),
   m_genBasePoseOut_("genBasePoseOut", m_genBasePose_),
   m_genBaseTformOut_("genBaseTformOut", m_genBaseTform_),
+  m_accRefOut_("accRef", m_accRef_),
   m_landingTargetOut_("landingTargetOut", m_landingTarget_),
   m_footStepNodesListOut_("footStepNodesListOut", m_curFootStepNodesList_),
   m_comPredictParamOut_("comPredictParamOut", m_comPredictParam_),
@@ -84,6 +85,7 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
   this->addOutPort("genTauOut", this->ports_.m_genTauOut_);
   this->addOutPort("genBasePoseOut", this->ports_.m_genBasePoseOut_);
   this->addOutPort("genBaseTformOut", this->ports_.m_genBaseTformOut_);
+  this->addOutPort("accRef", this->ports_.m_accRefOut_);
   this->addOutPort("landingTargetOut", this->ports_.m_landingTargetOut_);
   this->addOutPort("footStepNodesListOut", this->ports_.m_footStepNodesListOut_);
   this->addOutPort("comPredictParamOut", this->ports_.m_comPredictParamOut_);
@@ -707,6 +709,21 @@ bool AutoStabilizer::writeOutPortData(AutoStabilizer::Ports& ports, const AutoSt
     ports.m_genBaseRpy_.data.p = baseRpy[1];
     ports.m_genBaseRpy_.data.y = baseRpy[2];
     ports.m_genBaseRpyOut_.write();
+  }
+
+  {
+    // accRef
+    cnoid::RateGyroSensorPtr imu = gaitParam.genRobot->findDevice<cnoid::RateGyroSensor>("gyrometer");
+    cnoid::Vector3 imu_sensor_pos = imu->link()->p() + imu->link()->R() * imu->p_local();
+    cnoid::Vector3 imu_sensor_vel = (imu_sensor_pos - prev_imu_sensor_pos)/dt;
+    // convert to imu sensor local acceleration
+    cnoid::Vector3 acc = (imu->link()->R() * imu->R_local()).transpose() * (imu_sensor_vel - prev_imu_sensor_vel)/dt;
+    ports.m_accRef_.data.ax = acc(0);
+    ports.m_accRef_.data.ay = acc(1);
+    ports.m_accRef_.data.az = acc(2);
+    ports.m_accRefOut_.write();
+    prev_imu_sensor_pos = imu_sensor_pos;
+    prev_imu_sensor_vel = imu_sensor_vel;
   }
 
   // Gains

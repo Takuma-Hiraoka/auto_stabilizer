@@ -69,6 +69,10 @@ public:
   bool startWholeBodyMasterSlave();
   bool stopWholeBodyMasterSlave();
 
+  // for kalman filter accRef
+  static cnoid::Vector3 prev_imu_sensor_pos;
+  static cnoid::Vector3 prev_imu_sensor_vel;
+
 protected:
   std::mutex mutex_;
 
@@ -120,6 +124,8 @@ protected:
     RTC::OutPort<RTC::TimedPose3D> m_genBasePoseOut_;
     RTC::TimedDoubleSeq m_genBaseTform_;  // Generate World frame
     RTC::OutPort<RTC::TimedDoubleSeq> m_genBaseTformOut_; // for HrpsysSeqStateROSBridge
+    RTC::TimedAcceleration3D m_accRef_; // generate frame
+    RTC::OutPort<RTC::TimedAcceleration3D> m_accRefOut_;
     auto_stabilizer_msgs::TimedLandingPosition m_landingTarget_;
     RTC::OutPort<auto_stabilizer_msgs::TimedLandingPosition> m_landingTargetOut_; // steppable_region合図
     auto_stabilizer_msgs::TimedFootStepNodesList m_curFootStepNodesList_;
@@ -262,6 +268,10 @@ protected:
   static bool execAutoStabilizer(const AutoStabilizer::ControlMode& mode, GaitParam& gaitParam, double dt, const FootStepGenerator& footStepGenerator, const LegCoordsGenerator& legCoordsGenerator, const RefToGenFrameConverter& refToGenFrameConverter, const ActToGenFrameConverter& actToGenFrameConverter, const ImpedanceController& impedanceController, const Stabilizer& stabilizer, const ExternalForceHandler& externalForceHandler, const FullbodyIKSolver& fullbodyIKSolver, const LegManualController& legManualController, const CmdVelGenerator& cmdVelGenerator);
   static bool writeOutPortData(AutoStabilizer::Ports& ports, const AutoStabilizer::ControlMode& mode, cpp_filters::TwoPointInterpolator<double>& idleToAbcTransitionInterpolator, double dt, const GaitParam& gaitParam);
 };
+
+  // for kalman filter accRef
+inline cnoid::Vector3 AutoStabilizer::prev_imu_sensor_pos = cnoid::Vector3::Zero();
+inline cnoid::Vector3 AutoStabilizer::prev_imu_sensor_vel = cnoid::Vector3::Zero();
 
 
 extern "C"
