@@ -472,7 +472,7 @@ bool AutoStabilizer::readInPortData(const double& dt, AutoStabilizer::Ports& por
       dstNormalFromSupport[1] = ports.m_landingPose_.data.ny;
       dstNormalFromSupport[2] = ports.m_landingPose_.data.nz;
       footStepGenerator.relLandingPos = supportPoseHorizontal * dstPosFromSupport;
-      footStepGenerator.relLandingNormal = supportPoseHorizontal.linear() * dstNormalFromSupport;
+      footStepGenerator.relLandingNormal = supportPose.linear() * dstNormalFromSupport;
     }
   }
 
