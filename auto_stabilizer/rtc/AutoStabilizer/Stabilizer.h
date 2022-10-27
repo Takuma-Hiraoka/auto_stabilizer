@@ -27,12 +27,12 @@ public:
       cnoid::JointPath jointPath(actRobotTqc->rootLink(), actRobotTqc->link(gaitParam.eeParentLink[i]));
       if(jointPath.numJoints() == 6){
 	// もとのauto_stabilizerの値. ゲインが低く、go-velocity 0 0 0では前に進んでいってしまうが、坂を登ったり等に必要
-        supportPgain[i] = {5,10,10,5,0.1,0.1};
-        supportDgain[i] = {10,20,20,10,10,10};
-        landingPgain[i] = {5,1,1,1,0.1,0.1};
+        supportPgain[i] = {5,15,10,5,0.1,0.1};
+        supportDgain[i] = {10,20,20,10,5,5};
+        landingPgain[i] = {5,15,1,1,0.1,0.1};
         landingDgain[i] = {10,10,10,10,5,5};
         swingPgain[i] = {5,30,20,10,5,5};
-        swingDgain[i] = {10,30,20,20,10,10};
+        swingDgain[i] = {10,30,20,20,30,30};
       }else{
         supportPgain[i].resize(jointPath.numJoints(), 100.0);
         supportDgain[i].resize(jointPath.numJoints(), 100.0);
