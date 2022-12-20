@@ -32,7 +32,7 @@ bool Stabilizer::execStabilizer(const GaitParam& gaitParam, double dt, bool useA
 bool Stabilizer::calcResolvedAccelationControl(const GaitParam& gaitParam, double dt, bool useActState, cnoid::BodyPtr& actRobotTqc, 
 				     cnoid::Vector3& o_stTargetZmp, std::vector<cnoid::Vector6>& o_stEETargetWrench,
 				     std::vector<cpp_filters::TwoPointInterpolator<double> >& o_stServoPGainPercentage, std::vector<cpp_filters::TwoPointInterpolator<double> >& o_stServoDGainPercentage,
-					       Eigen::VectorXd& prev_q, Eigen::VectorXd& prev_dq, std::vector<cnoid::Vector6>& eePoseDiff_prev, std::vector<cnoid::Position>& eeTargetPosed, std::vector<cnoid::Position>& eeTargetPosedd, cnoid::Vector6& prev_rootd) const{
+					       Eigen::VectorXd& prev_q, Eigen::VectorXd& prev_dq, std::vector<cnoid::Vector6>& eePoseDiff_prev, std::vector<cnoid::Position>& eeTargetPosed, std::vector<cnoid::Position>& eeTargetPosedd, cnoid::Vector6& prev_rootd, cpp_filters::TwoPointInterpolator<double> solveFKMode) const{
   // - 現在のactual重心位置から、目標ZMPを計算
   // - 目標位置姿勢を満たすように分解加速度制御. 重心が倒立振子で加速された場合のトルクを計算
   // - 目標のZMPを満たすように目標足裏反力を計算、仮想仕事の原理で足し込む
@@ -47,7 +47,7 @@ bool Stabilizer::calcResolvedAccelationControl(const GaitParam& gaitParam, doubl
   this->calcTorque(dt, gaitParam, useActState, actRobotTqc, tgtCogAcc,
 		   o_stServoPGainPercentage, o_stServoDGainPercentage,
 		   root2CogForce,
-		   prev_q, prev_dq, eePoseDiff_prev, eeTargetPosed, eeTargetPosedd, prev_rootd);
+		   prev_q, prev_dq, eePoseDiff_prev, eeTargetPosed, eeTargetPosedd, prev_rootd, solveFKMode);
 
   tgtForce += root2CogForce;
   // 目標ZMPを満たすように目標EndEffector反力を計算
@@ -311,7 +311,7 @@ bool Stabilizer::calcWrench(const GaitParam& gaitParam, const cnoid::Vector3& tg
 
 bool Stabilizer::calcTorque(double dt, const GaitParam& gaitParam, bool useActState, cnoid::BodyPtr& actRobotTqc, const cnoid::Vector3& targetCogAcc,
                             std::vector<cpp_filters::TwoPointInterpolator<double> >& o_stServoPGainPercentage, std::vector<cpp_filters::TwoPointInterpolator<double> >& o_stServoDGainPercentage, cnoid::Vector3& root2CogForce,
-			    Eigen::VectorXd& prev_q, Eigen::VectorXd& prev_dq, std::vector<cnoid::Vector6>& eePoseDiff_prev, std::vector<cnoid::Position>& eeTargetPosed, std::vector<cnoid::Position>& eeTargetPosedd, cnoid::Vector6& prev_rootd) const{
+			    Eigen::VectorXd& prev_q, Eigen::VectorXd& prev_dq, std::vector<cnoid::Vector6>& eePoseDiff_prev, std::vector<cnoid::Position>& eeTargetPosed, std::vector<cnoid::Position>& eeTargetPosedd, cnoid::Vector6& prev_rootd, cpp_filters::TwoPointInterpolator<double> solveFKMode) const{
 
   if(!useActState){
     for(int i=0;i<actRobotTqc->numJoints();i++) actRobotTqc->joint(i)->u() = 0.0;
@@ -379,13 +379,26 @@ bool Stabilizer::calcTorque(double dt, const GaitParam& gaitParam, bool useActSt
 	      eePoseDiffGainLocal[j] = this->ee_K[i][j] * eePoseDiffLocal[j];
 	      eeVelDiffGainLocal[j] = this->ee_D[i][j] * eeVelDiffLocal[j];
 	    }
-	    ee_acc[i].head<3>() += eeR * eePoseDiffGainLocal.head<3>(); // generate frame
-	    ee_acc[i].tail<3>() += eeR * eePoseDiffGainLocal.tail<3>(); // generate frame
-	    ee_acc[i].head<3>() += eeR * eeVelDiffGainLocal.head<3>(); // generate frame
-	    ee_acc[i].tail<3>() += eeR * eeVelDiffGainLocal.tail<3>(); // generate frame
-	    if (ee_acc[i].head<3>().norm() > this->ee_dv_limit) ee_acc[i].head<3>() = ee_acc[i].head<3>() / ee_acc[i].head<3>().norm() * this->ee_dv_limit;
-	    if (ee_acc[i].tail<3>().norm() > this->ee_dw_limit) ee_acc[i].tail<3>() = ee_acc[i].tail<3>() / ee_acc[i].tail<3>().norm() * this->ee_dw_limit;
+	    if(i < NUM_LEGS) {
+	      ee_acc[i].head<3>() += eeR * eePoseDiffGainLocal.head<3>(); // generate frame
+	      ee_acc[i].tail<3>() += eeR * eePoseDiffGainLocal.tail<3>(); // generate frame
+	      ee_acc[i].head<3>() += eeR * eeVelDiffGainLocal.head<3>(); // generate frame
+	      ee_acc[i].tail<3>() += eeR * eeVelDiffGainLocal.tail<3>(); // generate frame
+	      if (ee_acc[i].head<3>().norm() > this->ee_dv_limit) ee_acc[i].head<3>() = ee_acc[i].head<3>() / ee_acc[i].head<3>().norm() * this->ee_dv_limit;
+	      if (ee_acc[i].tail<3>().norm() > this->ee_dw_limit) ee_acc[i].tail<3>() = ee_acc[i].tail<3>() / ee_acc[i].tail<3>().norm() * this->ee_dw_limit;
+	    } else {
+	      ee_acc[i].head<3>() += (1 - solveFKMode.value()) * eeR * eePoseDiffGainLocal.head<3>(); // generate frame
+	      ee_acc[i].tail<3>() += (1 - solveFKMode.value()) * eeR * eePoseDiffGainLocal.tail<3>(); // generate frame
+	      ee_acc[i].head<3>() += (1 - solveFKMode.value()) * eeR * eeVelDiffGainLocal.head<3>(); // generate frame
+	      ee_acc[i].tail<3>() += (1 - solveFKMode.value()) * eeR * eeVelDiffGainLocal.tail<3>(); // generate frame
+	      double dv_limit = this->ee_dv_limit;
+	      if(solveFKMode.value() != 0.0) dv_limit = 0.3; // 途中からの操縦のためのテンポラリ
+	      if (ee_acc[i].head<3>().norm() > dv_limit) ee_acc[i].head<3>() = ee_acc[i].head<3>() / ee_acc[i].head<3>().norm() * this->ee_dv_limit;
+	      double dw_limit = this->ee_dw_limit;
+	      if(solveFKMode.value() != 0.0) dw_limit = 0.3; // 途中からの操縦のためのテンポラリ
+	      if (ee_acc[i].tail<3>().norm() > dw_limit) ee_acc[i].tail<3>() = ee_acc[i].tail<3>() / ee_acc[i].tail<3>().norm() * this->ee_dw_limit;
 
+	    }
 	    eePoseDiff_prev[i] = eePoseDiffLocal;
 	  }
 	} // ee_act
