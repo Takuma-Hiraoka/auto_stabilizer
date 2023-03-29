@@ -91,14 +91,14 @@ public:
       if(i<NUM_LEGS){
 	defaultEED << 3, 3, 3, 1, 1, 1;
       }else{
-	defaultEED << 1, 1, 1, 10, 10, 10;
+	defaultEED << 5, 5, 5, 3, 3, 3;
       }
       this->ee_D.push_back(defaultEED);
       cnoid::Vector6 defaultEEK;
       if(i<NUM_LEGS){
-	defaultEEK << 20, 20, 20, 5, 5, 5;
+	defaultEEK << 2, 2, 2, 5, 5, 5;
       }else{
-	defaultEEK << 1, 1, 1, 2, 2, 2;
+	defaultEEK << 5, 5, 5, 3, 3, 3;
       }
       this->ee_K.push_back(defaultEEK);
     }
@@ -111,18 +111,18 @@ public:
     this->refAngle_K = cnoid::VectorXd::Zero(6 + gaitParam.actRobotTqc->numJoints());
     this->refAngle_D = cnoid::VectorXd::Zero(6 + gaitParam.actRobotTqc->numJoints());
     cnoid::Vector6 defaultRootK;
-    defaultRootK << 0, 0, 0, 100, 100, 100;
+    defaultRootK << 0, 0, 0, 1, 1, 1;
     this->refAngle_K.head<6>() = defaultRootK;
     for (int i=0;i<gaitParam.actRobotTqc->numJoints();i++){
-      this->refAngle_K[6+i] = 1;
-      if((i==12) || (i==13) || (i==14)) this->refAngle_K[6+i] = 10; // 腰roll pitch yaw
+      this->refAngle_K[6+i] = 3;
+      if((i==12) || (i==13) || (i==14)) this->refAngle_K[6+i] = 3; // 腰roll pitch yaw
     }
     cnoid::Vector6 defaultRootD;
-    defaultRootD << 0, 0, 0, 50, 50, 50;
+    defaultRootD << 0, 0, 0, 1, 1, 1;
     this->refAngle_D.head<6>() = defaultRootD;
     for (int i=0;i<gaitParam.actRobotTqc->numJoints();i++){
-      this->refAngle_D[6+i] = 1;
-      if((i==12) || (i==13) || (i==14)) this->refAngle_D[6+i] = 1; // 腰roll pitch yaw
+      this->refAngle_D[6+i] = 2;
+      if((i==12) || (i==13) || (i==14)) this->refAngle_D[6+i] = 2; // 腰roll pitch yaw
     }
   }
 protected:

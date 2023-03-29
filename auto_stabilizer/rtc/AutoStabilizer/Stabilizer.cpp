@@ -679,10 +679,10 @@ bool Stabilizer::calcTorque(double dt, const GaitParam& gaitParam, bool useActSt
       }
 
       //head
-      if(o_stServoPGainPercentage[15].getGoal() != 0.0) o_stServoPGainPercentage[15].setGoal(0.0, 0.6);
-      if(o_stServoPGainPercentage[16].getGoal() != 0.0) o_stServoPGainPercentage[16].setGoal(0.0, 0.6);
-      if(o_stServoDGainPercentage[15].getGoal() != 0.0) o_stServoDGainPercentage[15].setGoal(0.0, 0.6);
-      if(o_stServoDGainPercentage[16].getGoal() != 0.0) o_stServoDGainPercentage[16].setGoal(0.0, 0.6);
+      // if(o_stServoPGainPercentage[15].getGoal() != 0.0) o_stServoPGainPercentage[15].setGoal(0.0, 0.6);
+      // if(o_stServoPGainPercentage[16].getGoal() != 0.0) o_stServoPGainPercentage[16].setGoal(0.0, 0.6);
+      // if(o_stServoDGainPercentage[15].getGoal() != 0.0) o_stServoDGainPercentage[15].setGoal(0.0, 0.6);
+      // if(o_stServoDGainPercentage[16].getGoal() != 0.0) o_stServoDGainPercentage[16].setGoal(0.0, 0.6);
     }
   
     for(int i=0;i<gaitParam.genRobot->numJoints();i++){
