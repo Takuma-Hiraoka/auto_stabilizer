@@ -637,11 +637,13 @@ bool Stabilizer::calcTorque(double dt, const GaitParam& gaitParam, bool useActSt
     
     // Gain
     {
+      double trans_time = 3.0;
       for(int i=0;i<NUM_LEGS;i++){
 	cnoid::JointPath jointPath(actRobotTqc->rootLink(), actRobotTqc->link(gaitParam.eeParentLink[i]));
 	if(gaitParam.isManualControlMode[i].getGoal() == 0.0) { // Manual Control off
 	  if(gaitParam.footstepNodesList[0].isSupportPhase[i]){
-	    double transitionTime = std::max(this->landing2SupportTransitionTime, dt*2); // 現状, setGoal(*,dt)以下の時間でgoal指定するとwriteOutPortDataが破綻するのでテンポラリ
+	    //double transitionTime = std::max(this->landing2SupportTransitionTime, dt*2); // 現状, setGoal(*,dt)以下の時間でgoal指定するとwriteOutPortDataが破綻するのでテンポラリ
+	    double transitionTime = trans_time;
 	    for(int j=0;j<jointPath.numJoints();j++){
 	      if(o_stServoPGainPercentage[jointPath.joint(j)->jointId()].getGoal() != this->supportPgain[i][j]) o_stServoPGainPercentage[jointPath.joint(j)->jointId()].setGoal(this->supportPgain[i][j], transitionTime);
 	      if(o_stServoDGainPercentage[jointPath.joint(j)->jointId()].getGoal() != this->supportDgain[i][j]) o_stServoDGainPercentage[jointPath.joint(j)->jointId()].setGoal(this->supportDgain[i][j], transitionTime);
@@ -673,16 +675,17 @@ bool Stabilizer::calcTorque(double dt, const GaitParam& gaitParam, bool useActSt
 	cnoid::JointPath jointPath(actRobotTqc->rootLink(), actRobotTqc->link(gaitParam.eeParentLink[i]));
 	double arm_gain = 0.0;
 	for(int j=0;j<jointPath.numJoints();j++){
-	  if(o_stServoPGainPercentage[jointPath.joint(j)->jointId()].getGoal() != arm_gain) o_stServoPGainPercentage[jointPath.joint(j)->jointId()].setGoal(arm_gain, dt*25);
-	  if(o_stServoDGainPercentage[jointPath.joint(j)->jointId()].getGoal() != arm_gain) o_stServoDGainPercentage[jointPath.joint(j)->jointId()].setGoal(arm_gain, dt*25);
+	  if(o_stServoPGainPercentage[jointPath.joint(j)->jointId()].getGoal() != arm_gain) o_stServoPGainPercentage[jointPath.joint(j)->jointId()].setGoal(arm_gain, trans_time);
+	  if(o_stServoDGainPercentage[jointPath.joint(j)->jointId()].getGoal() != arm_gain) o_stServoDGainPercentage[jointPath.joint(j)->jointId()].setGoal(arm_gain, trans_time);
 	}
       }
 
       //head
-      if(o_stServoPGainPercentage[15].getGoal() != 0.0) o_stServoPGainPercentage[15].setGoal(0.0, dt*25);
-      if(o_stServoPGainPercentage[16].getGoal() != 0.0) o_stServoPGainPercentage[16].setGoal(0.0, dt*25);
-      if(o_stServoDGainPercentage[15].getGoal() != 0.0) o_stServoDGainPercentage[15].setGoal(0.0, dt*25);
-      if(o_stServoDGainPercentage[16].getGoal() != 0.0) o_stServoDGainPercentage[16].setGoal(0.0, dt*25);
+      double head_gain = 0.0;
+      if(o_stServoPGainPercentage[15].getGoal() != head_gain) o_stServoPGainPercentage[15].setGoal(head_gain, trans_time);
+      if(o_stServoPGainPercentage[16].getGoal() != head_gain) o_stServoPGainPercentage[16].setGoal(head_gain, trans_time);
+      if(o_stServoDGainPercentage[15].getGoal() != head_gain) o_stServoDGainPercentage[15].setGoal(head_gain, trans_time);
+      if(o_stServoDGainPercentage[16].getGoal() != head_gain) o_stServoDGainPercentage[16].setGoal(head_gain, trans_time);
     }
   
     for(int i=0;i<gaitParam.genRobot->numJoints();i++){
