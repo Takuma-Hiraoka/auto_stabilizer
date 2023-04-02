@@ -49,7 +49,7 @@ bool Stabilizer::calcResolvedAccelationControl(const GaitParam& gaitParam, doubl
 		   root2CogForce,
 		   prev_q, prev_dq, eePoseDiff_prev, eeTargetPosed, eeTargetPosedd, prev_rootd);
 
-  tgtForce += root2CogForce;
+  //  tgtForce += root2CogForce;
   // 目標ZMPを満たすように目標EndEffector反力を計算
   this->calcWrench(gaitParam, o_stTargetZmp, tgtForce, useActState,// input
                    actRobotTqc, o_stEETargetWrench); // output
@@ -637,7 +637,7 @@ bool Stabilizer::calcTorque(double dt, const GaitParam& gaitParam, bool useActSt
     
     // Gain
     {
-      double trans_time = 3.0;
+      double trans_time = 0.6;
       for(int i=0;i<NUM_LEGS;i++){
 	cnoid::JointPath jointPath(actRobotTqc->rootLink(), actRobotTqc->link(gaitParam.eeParentLink[i]));
 	if(gaitParam.isManualControlMode[i].getGoal() == 0.0) { // Manual Control off
