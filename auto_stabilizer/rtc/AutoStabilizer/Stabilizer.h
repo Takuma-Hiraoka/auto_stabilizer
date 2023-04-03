@@ -87,21 +87,7 @@ public:
       this->ddq_limit[i] = climit * gearRatio * torqueConst / (Inertia * axis).norm();
     }
     for(int i=0;i<gaitParam.eeName.size();i++){
-      // cnoid::Vector6 defaultEED;
-      // if(i<NUM_LEGS){
-      // 	defaultEED << 3, 3, 3, 1, 1, 1;
-      // }else{
-      // 	defaultEED << 5, 5, 5, 3, 3, 3;
-      // }
-      // this->ee_D.push_back(defaultEED);
-      // cnoid::Vector6 defaultEEK;
-      // if(i<NUM_LEGS){
-      // 	defaultEEK << 2, 2, 2, 5, 5, 5;
-      // }else{
-      // 	defaultEEK << 5, 5, 5, 3, 3, 3;
-      // }
-      // this->ee_K.push_back(defaultEEK);
-            cnoid::Vector6 defaultEED;
+      cnoid::Vector6 defaultEED;
       if(i<NUM_LEGS){
 	defaultEED << 30, 30, 30, 20, 20, 20;
       }else{
@@ -110,7 +96,7 @@ public:
       this->ee_D.push_back(defaultEED);
       cnoid::Vector6 defaultEEK;
       if(i<NUM_LEGS){
-	defaultEEK << 20, 20, 20, 10, 10, 10;
+	defaultEEK << 200, 200, 200, 100, 100, 100;
       }else{
 	defaultEEK << 50, 50, 50, 20, 20, 20;
       }
@@ -125,7 +111,7 @@ public:
     this->refAngle_K = cnoid::VectorXd::Zero(6 + gaitParam.actRobotTqc->numJoints());
     this->refAngle_D = cnoid::VectorXd::Zero(6 + gaitParam.actRobotTqc->numJoints());
     cnoid::Vector6 defaultRootK;
-    defaultRootK << 0, 0, 0, 100, 100, 100;
+    defaultRootK << 0, 0, 0, 200, 200, 200;
     this->refAngle_K.head<6>() = defaultRootK;
     for (int i=0;i<gaitParam.actRobotTqc->numJoints();i++){
       this->refAngle_K[6+i] = 1;

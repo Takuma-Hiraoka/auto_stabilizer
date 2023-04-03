@@ -671,14 +671,14 @@ bool Stabilizer::calcTorque(double dt, const GaitParam& gaitParam, bool useActSt
       }
 
       // arm
-      for(int i=NUM_LEGS;i<NUM_LEGS+2;i++){
-	cnoid::JointPath jointPath(actRobotTqc->rootLink(), actRobotTqc->link(gaitParam.eeParentLink[i]));
-	double arm_gain = 0.0;
-	for(int j=0;j<jointPath.numJoints();j++){
-	  if(o_stServoPGainPercentage[jointPath.joint(j)->jointId()].getGoal() != arm_gain) o_stServoPGainPercentage[jointPath.joint(j)->jointId()].setGoal(arm_gain, trans_time);
-	  if(o_stServoDGainPercentage[jointPath.joint(j)->jointId()].getGoal() != arm_gain) o_stServoDGainPercentage[jointPath.joint(j)->jointId()].setGoal(arm_gain, trans_time);
-	}
-      }
+      // for(int i=NUM_LEGS;i<NUM_LEGS;i++){
+      // 	cnoid::JointPath jointPath(actRobotTqc->rootLink(), actRobotTqc->link(gaitParam.eeParentLink[i]));
+      // 	double arm_gain = 0.0;
+      // 	for(int j=0;j<jointPath.numJoints();j++){
+      // 	  if(o_stServoPGainPercentage[jointPath.joint(j)->jointId()].getGoal() != arm_gain) o_stServoPGainPercentage[jointPath.joint(j)->jointId()].setGoal(arm_gain, trans_time);
+      // 	  if(o_stServoDGainPercentage[jointPath.joint(j)->jointId()].getGoal() != arm_gain) o_stServoDGainPercentage[jointPath.joint(j)->jointId()].setGoal(arm_gain, trans_time);
+      // 	}
+      // }
 
       //head
       double head_gain = 0.0;
