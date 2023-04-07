@@ -118,7 +118,7 @@ public:
       if((i==12) || (i==13) || (i==14)) this->refAngle_K[6+i] = 50; // 腰roll pitch yaw
     }
     cnoid::Vector6 defaultRootD;
-    defaultRootD << 0, 0, 0, 50, 50, 50;
+    defaultRootD << 0, 0, 0, 80, 80, 80;
     this->refAngle_D.head<6>() = defaultRootD;
     for (int i=0;i<gaitParam.actRobotTqc->numJoints();i++){
       this->refAngle_D[6+i] = 1;
