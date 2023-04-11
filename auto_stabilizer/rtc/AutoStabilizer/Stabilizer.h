@@ -89,14 +89,16 @@ public:
     for(int i=0;i<gaitParam.eeName.size();i++){
       cnoid::Vector6 defaultEED;
       if(i<NUM_LEGS){
-	defaultEED << 30, 30, 30, 20, 20, 20;
+          defaultEED << 7, 7, 7, 5, 5, 5; // これ以上あげられない
       }else{
 	defaultEED << 10, 10, 10, 10, 10, 10;
       }
       this->ee_D.push_back(defaultEED);
       cnoid::Vector6 defaultEEK;
       if(i<NUM_LEGS){
-	defaultEEK << 200, 200, 200, 100, 100, 100;
+          //defaultEEK << 100, 100, 100, 50, 50, 50;
+          defaultEEK << 60, 60, 60, 30, 30, 30;
+          //defaultEEK << 0, 0, 0, 0, 0, 0;
       }else{
 	defaultEEK << 50, 50, 50, 20, 20, 20;
       }

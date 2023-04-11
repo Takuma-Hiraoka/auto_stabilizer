@@ -187,7 +187,7 @@ protected:
     Mode_enum current, previous, next;
     double remain_time;
   public:
-    ControlMode(){ reset(); abc_start_transition_time = 2.0; abc_stop_transition_time = 2.0; st_start_transition_time = 0.5; st_stop_transition_time = 2.0;}
+    ControlMode(){ reset(); abc_start_transition_time = 2.0; abc_stop_transition_time = 2.0; st_start_transition_time = 0.3; st_stop_transition_time = 2.0;}
     void reset(){ current = previous = next = MODE_IDLE; remain_time = 0;}
     bool setNextTransition(const Transition_enum request){
       switch(request){
@@ -249,6 +249,7 @@ protected:
     bool isSyncToStopST() const{ return current == MODE_SYNC_TO_STOPST;}
     bool isSyncToStopSTInit() const{ return (current != previous) && isSyncToStopST();}
     bool isSTRunning() const{ return (current==MODE_SYNC_TO_ST) || (current==MODE_ST) ;}
+    bool isST() const{ return (current==MODE_ST) ;}
   };
   ControlMode mode_;
   cpp_filters::TwoPointInterpolator<double> idleToAbcTransitionInterpolator_ = cpp_filters::TwoPointInterpolator<double>(0.0, 0.0, 0.0, cpp_filters::LINEAR);

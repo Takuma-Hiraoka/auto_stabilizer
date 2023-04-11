@@ -665,7 +665,7 @@ bool AutoStabilizer::writeOutPortData(AutoStabilizer::Ports& ports, const AutoSt
         double value = gaitParam.refRobotRaw->joint(i)->q() * (1.0 - ratio) + gaitParam.genRobot->joint(i)->q() * ratio;
         if(std::isfinite(value)) ports.m_q_.data[i] = value;
         else std::cerr << "m_q is not finite!" << std::endl;
-      }else if(mode.isSTRunning()){
+      }else if(mode.isST()){
         double value = gaitParam.actRobot->joint(i)->q();
         if(std::isfinite(value)) ports.m_q_.data[i] = value;
         else std::cerr << "m_q is not finite!" << std::endl;
