@@ -637,7 +637,7 @@ bool Stabilizer::calcTorque(double dt, const GaitParam& gaitParam, bool useActSt
     
     // Gain
     {
-      double trans_time = 0.6;
+      double trans_time = 0.2;
       for(int i=0;i<NUM_LEGS;i++){
 	cnoid::JointPath jointPath(actRobotTqc->rootLink(), actRobotTqc->link(gaitParam.eeParentLink[i]));
 	if(gaitParam.isManualControlMode[i].getGoal() == 0.0) { // Manual Control off
