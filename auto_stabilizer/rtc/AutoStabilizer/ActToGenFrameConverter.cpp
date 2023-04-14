@@ -5,7 +5,7 @@
 #include <cnoid/EigenUtil>
 
 bool ActToGenFrameConverter::convertFrame(const GaitParam& gaitParam, double dt,// input
-                                          cnoid::BodyPtr& actRobot, std::vector<cnoid::Position>& o_actEEPose, std::vector<cnoid::Vector6>& o_actEEWrench, cpp_filters::FirstOrderLowPassFilter<cnoid::Vector3>& o_actCogVel, cpp_filters::FirstOrderLowPassFilter<cnoid::Vector6>& o_actRootVel, std::vector<bool>& prevOriginLeg) const {
+                                          cnoid::BodyPtr& actRobot, std::vector<cnoid::Position>& o_actEEPose, std::vector<cnoid::Vector6>& o_actEEWrench, cpp_filters::FirstOrderLowPassFilter<cnoid::Vector3>& o_actCogVel, cpp_filters::FirstOrderLowPassFilter<cnoid::Vector6>& o_actRootVel, std::vector<bool>& prevOriginLeg, cnoid::Vector3& o_actZmp) const {
 
   cnoid::Vector3 actCogPrev = actRobot->centerOfMass();
   cnoid::Position actRootPrev = actRobot->rootLink()->T();
@@ -82,6 +82,29 @@ bool ActToGenFrameConverter::convertFrame(const GaitParam& gaitParam, double dt,
     }
   }
 
+  cnoid::Vector3 actZmp;
+  {
+    double tmpzmpx = 0;
+    double tmpzmpy = 0;
+    double tmpfz = 0, tmpfz2 = 0.0;
+    double zmp_z = std::min(actEEPose[RLEG].translation()[2], actEEPose[LLEG].translation()[2]);
+
+    tmpzmpx += actEEWrench[RLEG][2] * actEEPose[RLEG].translation()[0] - (actEEPose[RLEG].translation()[2] - zmp_z) * actEEWrench[RLEG][0] - actEEWrench[RLEG][4];
+    tmpzmpy += actEEWrench[RLEG][2] * actEEPose[RLEG].translation()[1] - (actEEPose[RLEG].translation()[2] - zmp_z) * actEEWrench[RLEG][1] + actEEWrench[RLEG][3];
+    tmpfz   += actEEWrench[RLEG][2];
+
+    tmpzmpx += actEEWrench[LLEG][2] * actEEPose[LLEG].translation()[0] - (actEEPose[LLEG].translation()[2] - zmp_z) * actEEWrench[LLEG][0] - actEEWrench[LLEG][4];
+    tmpzmpy += actEEWrench[LLEG][2] * actEEPose[LLEG].translation()[1] - (actEEPose[LLEG].translation()[2] - zmp_z) * actEEWrench[LLEG][1] + actEEWrench[LLEG][3];
+    tmpfz   += actEEWrench[LLEG][2];
+
+    if (tmpfz > 50/*N*/) {
+      actZmp = cnoid::Vector3(tmpzmpx / tmpfz, tmpzmpy / tmpfz, zmp_z);
+    } else {
+      actZmp = cnoid::Vector3(0,0,0);
+      //ret_zmp = act_zmp;
+    }
+  }
+
   o_actEEPose = actEEPose;
   o_actEEWrench = actEEWrench;
   if(this->isInitial){
@@ -91,6 +114,7 @@ bool ActToGenFrameConverter::convertFrame(const GaitParam& gaitParam, double dt,
     o_actCogVel.passFilter(actCogVel, dt);
     o_actRootVel.passFilter(actRootVel, dt);
   }
+  o_actZmp = actZmp;
 
   this->isInitial = false;
 

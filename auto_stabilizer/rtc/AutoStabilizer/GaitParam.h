@@ -74,6 +74,7 @@ public:
   std::vector<cnoid::Position> actEEPose; // 要素数と順序はeeNameと同じ.generate frame
   std::vector<cnoid::Vector6> actEEWrench; // 要素数と順序はeeNameと同じ.generate frame. EndEffector origin. ロボットが受ける力
   std::vector<bool> prevOriginLeg = std::vector<bool>{true, false}; // 要素数2.  rleg: 0. lleg: 1. 一つ前の周期でweightが1であったかどうか
+  cnoid::Vector3 actZmp;
 
   // ExternalForceHandler
   double omega = std::sqrt(g / refdz); // DCMの計算に用いる. 0より大きい
