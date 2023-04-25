@@ -98,7 +98,7 @@ public:
       cnoid::Vector6 defaultEEK;
       if(i<NUM_LEGS){
           //defaultEEK << 100, 100, 100, 50, 50, 50;
-          defaultEEK << 120, 150, 150, 50, 50, 50;
+          defaultEEK << 120, 150, 180, 50, 50, 50;
           //defaultEEK << 0, 0, 0, 0, 0, 0;
       }else{
 	defaultEEK << 50, 50, 50, 20, 20, 20;
