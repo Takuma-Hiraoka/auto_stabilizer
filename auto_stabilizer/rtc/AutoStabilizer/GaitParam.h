@@ -153,6 +153,16 @@ public:
   // FullbodyIKSolver
   cnoid::BodyPtr genRobot; // output. 関節位置制御用
 
+  // for tactile sensor
+  class TactileSensor
+  {
+  public:
+    std::string linkName;
+    cnoid::Vector3 translation; // リンク座標系でどこに取り付けられているか
+    cnoid::Matrix3 rotation; // リンク座標系でセンサの姿勢．zがリンク内側方向
+  };
+  std::vector<TactileSensor> tactileSensorList = std::vector<TactileSensor>();
+
   // for debug data
   class DebugData {
   public:

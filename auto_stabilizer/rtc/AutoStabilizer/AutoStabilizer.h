@@ -50,6 +50,7 @@ public:
   virtual RTC::ReturnCode_t onDeactivated(RTC::UniqueId ec_id);
   virtual RTC::ReturnCode_t onExecute(RTC::UniqueId ec_id);
 
+  std::string replaceOtherStr(std::string &replacedStr, std::string from, std::string to);
   bool goPos(const double& x, const double& y, const double& th);
   bool goVelocity(const double& vx, const double& vy, const double& vth);
   bool goStop();
@@ -109,6 +110,8 @@ protected:
     RTC::Time steppableRegionLastUpdateTime_; // m_steppableRegionIn_に最後にdataが届いたときの、m_qRef_.tmの時刻
     auto_stabilizer_msgs::TimedLandingPosition m_landingHeight_; // 着地姿勢. 支持脚を水平にした座標系
     RTC::InPort<auto_stabilizer_msgs::TimedLandingPosition> m_landingHeightIn_;
+    RTC::TimedDoubleSeq m_tactileSensorArray_;
+    RTC::InPort<RTC::TimedDoubleSeq> m_tactileSensorArrayIn_;
 
     RTC::TimedDoubleSeq m_q_;
     RTC::OutPort<RTC::TimedDoubleSeq> m_qOut_;

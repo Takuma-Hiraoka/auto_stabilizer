@@ -4,6 +4,7 @@
 #include <cnoid/RateGyroSensor>
 #include <cnoid/ValueTree>
 #include <cnoid/EigenUtil>
+#include <cnoid/YAMLReader>
 #include "MathUtil.h"
 #include "CnoidBodyUtil.h"
 #include <limits>
@@ -22,6 +23,17 @@ static const char* AutoStabilizer_spec[] = {
   ""
 };
 
+std::string AutoStabilizer::replaceOtherStr(std::string &replacedStr, std::string from, std::string to) {
+    const unsigned int pos = replacedStr.find(from);
+    const int len = from.length();
+
+    if (pos == std::string::npos || from.empty()) {
+        return replacedStr;
+    }
+
+    return replacedStr.replace(pos, len, to);
+}
+
 AutoStabilizer::Ports::Ports() :
   m_qRefIn_("qRef", m_qRef_),
   m_refTauIn_("refTauIn", m_refTau_),
@@ -33,6 +45,7 @@ AutoStabilizer::Ports::Ports() :
   m_selfCollisionIn_("selfCollisionIn", m_selfCollision_),
   m_steppableRegionIn_("steppableRegionIn", m_steppableRegion_),
   m_landingHeightIn_("landingHeightIn", m_landingHeight_),
+  m_tactileSensorArrayIn_("tactileSensorArrayIn", m_tactileSensorArray_),
 
   m_qOut_("q", m_q_),
   m_genTauOut_("genTauOut", m_genTau_),
@@ -83,6 +96,7 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
   this->addInPort("selfCollisionIn", this->ports_.m_selfCollisionIn_);
   this->addInPort("steppableRegionIn", this->ports_.m_steppableRegionIn_);
   this->addInPort("landingHeightIn", this->ports_.m_landingHeightIn_);
+  this->addInPort("tactileSensorArrayIn", this->ports_.m_tactileSensorArrayIn_);
   this->addOutPort("q", this->ports_.m_qOut_);
   this->addOutPort("genTauOut", this->ports_.m_genTauOut_);
   this->addOutPort("genBasePoseOut", this->ports_.m_genBasePoseOut_);
@@ -319,6 +333,44 @@ RTC::ReturnCode_t AutoStabilizer::onInitialize(){
     }
   }
 
+  // load tactile_sensor
+  {
+    std::string fileName;
+    if(this->getProperties().hasKey("tactile_sensor_file")) fileName = std::string(this->getProperties()["tactile_sensor_file"]);
+    else fileName = std::string(this->m_pManager->getConfig()["tactile_sensor_file"]); // 引数 -o で与えたプロパティを捕捉
+    std::cerr << "[" << this->m_profile.instance_name << "] tactile_sensor_file: " << fileName <<std::endl;
+    cnoid::YAMLReader reader;
+    cnoid::MappingPtr topNode;
+    topNode = reader.loadDocument(fileName)->toMapping();
+    auto& tactileSensorList = *topNode->findListing("tactile_sensor");
+    if (!tactileSensorList.isValid()) {
+      std::cerr << "\x1b[31m[" << this->m_profile.instance_name << "] " << "cannot load config file" << "\x1b[39m" << std::endl;
+      return RTC::RTC_ERROR;
+    }
+    for (int i=0; i< tactileSensorList.size(); i++) {
+      cnoid::Mapping* info = tactileSensorList[i].toMapping();
+      GaitParam::TactileSensor sensor;
+      // link
+      std::string linkName;
+      info->extract("link", linkName);
+      if (linkName.find("LINK") != std::string::npos) {
+	replaceOtherStr(linkName, "LINK", "JOINT");
+      }
+      sensor.linkName = linkName;
+      // translation
+      auto translation_ = info->extract("translation");
+      auto& translationTmp = *translation_->toListing();
+      sensor.translation = cnoid::Vector3(translationTmp[0].toDouble(), translationTmp[1].toDouble(), translationTmp[2].toDouble());
+      // rotation
+      auto rotation_ = info->extract("rotation");
+      auto& rotationTmp = *rotation_->toListing();
+      sensor.rotation << rotationTmp[0].toDouble(), rotationTmp[1].toDouble(), rotationTmp[2].toDouble(),
+	rotationTmp[3].toDouble(), rotationTmp[4].toDouble(), rotationTmp[5].toDouble(),
+	rotationTmp[6].toDouble(), rotationTmp[7].toDouble(), rotationTmp[8].toDouble();
+      this->gaitParam_.tactileSensorList.push_back(sensor);
+    }
+  }
+
   // init ImpedanceController
   for(int i=0;i<this->gaitParam_.eeName.size();i++) this->impedanceController_.push_backEE();
 
@@ -452,6 +504,14 @@ bool AutoStabilizer::readInPortData(const double& dt, const GaitParam& gaitParam
           else std::cerr << "m_actWrench is not finite!" << std::endl;
         }
       }
+    }
+  }
+
+  // tactile sensor用テンポラリ
+  if(ports.m_tactileSensorArrayIn_.isNew()){
+    ports.m_tactileSensorArrayIn_.read();
+    for (int i=0;i<gaitParam.tactileSensorList.size();i++){
+      cnoid::Vector3 force = cnoid::Vector3(ports.m_tactileSensorArray_.data[i*3+1], ports.m_tactileSensorArray_.data[i*3+2], ports.m_tactileSensorArray_.data[i*3+0]);
     }
   }
 
